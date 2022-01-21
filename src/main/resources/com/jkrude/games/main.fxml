@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import com.jfoenix.controls.JFXToggleButton?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.SVGPath?>
+<?import javafx.scene.text.Font?>
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" prefHeight="1080.0" prefWidth="1920.0"
+  xmlns="http://javafx.com/javafx/11.0.1" fx:controller="com.jkrude.games.Controller" fx:id="borderPane">
+
+
+  <center>
+    <AnchorPane style="-fx-background-color: #ecf0f5;" fx:id="centerPane">
+      <children>
+        <JFXButton AnchorPane.bottomAnchor="40.0" AnchorPane.rightAnchor="40.0" disable="true" focusTraversable="false"
+          layoutX="1676.0" layoutY="1013.0" text="Confirm" visible="false" fx:id="confirmBtn">
+          <font>
+            <Font size="16.0"/>
+          </font>
+          <padding>
+            <Insets bottom="16.0" left="16.0" right="16.0" top="16.0"/>
+          </padding>
+        </JFXButton>
+      </children>
+    </AnchorPane>
+  </center>
+  <left>
+    <VBox style="-fx-background-color: #d3d7db;" BorderPane.alignment="CENTER" id="navigation-rail" maxWidth="130"
+      spacing="64.0">
+      <children>
+        <JFXButton text="State" fx:id="addStateBtn">
+          <graphic>
+            <SVGPath
+              content="M12,2C6.5,2,2,6.5,2,12s4.5,10,10,10s10-4.5,10-10S17.5,2,12,2z M13,4.07c3.61,0.45,6.48,3.33,6.93,6.93H13V4.07z M4,12 c0-4.06,3.07-7.44,7-7.93v15.87C7.07,19.44,4,16.06,4,12z M13,19.93V13h6.93C19.48,16.61,16.61,19.48,13,19.93z"/>
+          </graphic>
+        </JFXButton>
+        <JFXButton onAction="#startAttractorProcess" text="Show Attractor"/>
+        <JFXToggleButton contentDisplay="BOTTOM" graphicTextGap="0.0" text="Player One" fx:id="playerSwitch"/>
+        <Label style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #505658FF" text="Games"
+          textAlignment="CENTER" wrapText="true">
+          <VBox.margin>
+            <Insets bottom="16.0"/>
+          </VBox.margin>
+        </Label>
+
+      </children>
+      <padding>
+        <Insets bottom="16.0" left="16.0" right="16.0" top="32.0"/>
+      </padding>
+    </VBox>
+  </left>
+</BorderPane>

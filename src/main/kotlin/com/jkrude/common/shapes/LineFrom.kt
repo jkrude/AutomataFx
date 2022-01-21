@@ -1,12 +1,10 @@
-package com.jkrude.automata.shapes
+package com.jkrude.common.shapes
 
 import javafx.beans.property.BooleanProperty
 import javafx.beans.property.DoubleProperty
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleDoubleProperty
 import javafx.scene.shape.Line
-import javafx.scene.transform.Rotate
-import kotlin.math.atan
 import kotlin.math.sqrt
 
 class LineFrom(

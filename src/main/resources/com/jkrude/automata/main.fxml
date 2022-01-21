@@ -7,17 +7,18 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.SVGPath?>
-<?import javafx.scene.text.Font?>
-
-<BorderPane fx:id="borderPane" prefHeight="1080.0" prefWidth="1920.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.jkrude.automata.Controller">
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" prefHeight="1080.0" prefWidth="1920.0"
+  xmlns="http://javafx.com/javafx/11.0.1" fx:controller="com.jkrude.common.Controller" fx:id="borderPane">
 
 
   <left>
-    <VBox id="navigation-rail" maxWidth="130" spacing="64.0" style="-fx-background-color: #d3d7db;" BorderPane.alignment="CENTER">
+    <VBox id="navigation-rail" maxWidth="130" spacing="64.0" style="-fx-background-color: #d3d7db;"
+      BorderPane.alignment="CENTER">
       <children>
-        <Label style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #505658FF" text="Automata" textAlignment="CENTER" wrapText="true">
+        <Label style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #505658FF" text="Automata"
+          textAlignment="CENTER" wrapText="true">
           <VBox.margin>
-            <Insets bottom="16.0" />
+            <Insets bottom="16.0"/>
           </VBox.margin>
         </Label>
         <JFXButton fx:id="addStateBtn" text="State">
