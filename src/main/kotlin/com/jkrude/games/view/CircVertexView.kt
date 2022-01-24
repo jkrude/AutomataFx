@@ -12,7 +12,7 @@ class CircVertexView(initialPoint: Point2D = 0.0 to 0.0, toggleGroup: ToggleGrou
     AbstractVertexView<Vertex, Circle>(initialPoint, Circle(), toggleGroup, vertex) {
 
     override val hoverListener: InvalidationListener = InvalidationListener {
-        if (this.shape.isHover) this.shape.stroke = Values.markedColor
+        if (super.group.isHover) this.shape.stroke = Values.markedColor
         else this.shape.stroke = null
     }
 

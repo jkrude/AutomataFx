@@ -2,7 +2,7 @@ package com.jkrude.games.logic
 
 import com.jkrude.games.Player
 
-open class Vertex(val player: Player, val id: UInt, edgesTo: List<Vertex> = ArrayList()) {
+open class Vertex(val player: Player, val id: String, edgesTo: List<Vertex> = ArrayList()) {
     private val edgesInernal: MutableList<Edge> = mutableListOf()
     val edges: List<Edge> get() = edgesInernal
 
@@ -21,6 +21,6 @@ open class Vertex(val player: Player, val id: UInt, edgesTo: List<Vertex> = Arra
     override fun toString(): String = id.toString()
 }
 
-open class PVertex(player: Player, id: UInt, val parity: UInt, edgesTo: List<Vertex> = ArrayList()) : Vertex(
+open class PVertex(player: Player, id: String, val parity: UInt, edgesTo: List<Vertex> = ArrayList()) : Vertex(
     player, id, edgesTo
 )

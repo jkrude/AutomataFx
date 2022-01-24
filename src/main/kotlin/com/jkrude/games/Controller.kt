@@ -73,15 +73,18 @@ class Controller : Initializable {
     private fun bindChildrenToStatesAndTransitions() {
         states.addListener(ListChangeListener { change ->
             while (change.next()) {
-                if (change.wasAdded()) centerPane.children.addAll(change.addedSubList.map { it.getAsShape() })
-                if (change.wasRemoved()) centerPane.children.removeAll(change.removed.map { it.getAsShape() })
+                if (change.wasAdded()) centerPane.children.addAll(change.addedSubList.map { it.getDrawable() })
+                if (change.wasRemoved()) centerPane.children.removeAll(change.removed.map { it.getDrawable() })
             }
         })
         transitionShapes.addListener(ListChangeListener { change ->
             while (change.next()) {
                 if (change.wasAdded()) {
-                    change.addedSubList.forEach { it.from.vertexLogic.addEdgeTo(it.to.vertexLogic) }
-                    centerPane.children.addAll(change.addedSubList.map { it.arrow })
+                    for (edge in change.addedSubList) {
+                        edge.from.vertexLogic.addEdgeTo(edge.to.vertexLogic)
+                        centerPane.children.add(edge.arrow)
+                        edge.arrow.toBack()
+                    }
                 }
                 if (change.wasRemoved()) {
                     change.removed.forEach { it.from.vertexLogic.removeEdgeTo(it.to.vertexLogic) }
@@ -100,7 +103,7 @@ class Controller : Initializable {
         }
         centerPane.setOnMousePressed {
             if (it.button == MouseButton.SECONDARY) {
-                val targets = states.filter { s -> s.getAsShape().contains(it.x, it.y) }
+                val targets = states.filter { s -> s.getDrawable().contains(it.x, it.y) }
                 if (targets.size != 1) return@setOnMousePressed
                 val newEdgeCreator = NewEdgeCreator(targets.first())
                 centerPane.setOnMouseReleased(newEdgeCreator::onMouseReleased)
@@ -133,12 +136,12 @@ class Controller : Initializable {
 
         init {
             arrow.isVisible = false // only show if dragged too
-            arrow.toBack()
             arrow.startXProperty.bind(source.xProperty)
             arrow.startYProperty.bind(source.yProperty)
             arrow.endX = source.x
             arrow.endY = source.y
             centerPane.children.add(arrow)
+            arrow.toBack()
         }
 
         fun onDragged(event: MouseEvent) {
@@ -152,7 +155,7 @@ class Controller : Initializable {
             if (event.button != MouseButton.SECONDARY || finished) return
             finished = true
             centerPane.children.remove(arrow)
-            val targets = this@Controller.states.filter { it.getAsShape().contains(event.x, event.y) }
+            val targets = this@Controller.states.filter { it.getDrawable().contains(event.x, event.y) }
             if (targets.size != 1 || targets.first() === this.source) return
             val target = targets.first()
             // only one directed edge for each (u,v)
@@ -174,7 +177,7 @@ class Controller : Initializable {
 
         val selected: MutableSet<VertexView<Vertex>> = HashSet()
         val eventFilter = EventHandler<MouseEvent> {
-            val sel = states.filter { s -> s.getAsShape().contains(it.x, it.y) }
+            val sel = states.filter { s -> s.getDrawable().contains(it.x, it.y) }
             sel.forEach { s -> s.setMarked() }
             selected += sel
             it.consume()
@@ -204,7 +207,7 @@ class Controller : Initializable {
     }
 
     private fun createNewVertex(x: Double, y: Double, player: Player = currentPlayer) {
-        val vertex = Vertex(player, nextID());
+        val vertex = Vertex(player, nextID().toString());
         val vertexView =
             if (player == Player.ONE) CircVertexView(x to y, toggleGroup, vertex)
             else RectVertexView(x to y, toggleGroup, vertex)

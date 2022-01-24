@@ -55,10 +55,10 @@ open class PGame(vertices: List<PVertex>) : Game<PVertex>(vertices) {
 
 fun main() {
 
-    val v1 = PVertex(Player.ONE, 1U, 4U - 1U)
-    val v2 = PVertex(Player.ONE, 2U, 4U - 2U)
-    val v3 = PVertex(Player.ONE, 3U, 4U - 3U)
-    val v4 = PVertex(Player.TWO, 4U, 4U - 4U)
+    val v1 = PVertex(Player.ONE, "1", 4U - 1U)
+    val v2 = PVertex(Player.ONE, "2", 4U - 2U)
+    val v3 = PVertex(Player.ONE, "3", 4U - 3U)
+    val v4 = PVertex(Player.TWO, "4", 4U - 4U)
     v1.addEdgeTo(v1, v2)
     v2.addEdgeTo(v2, v3)
     v3.addEdgeTo(v3, v4)
