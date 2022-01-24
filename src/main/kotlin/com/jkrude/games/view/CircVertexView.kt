@@ -7,6 +7,7 @@ import com.jkrude.games.logic.Vertex
 import javafx.beans.InvalidationListener
 import javafx.scene.control.ToggleGroup
 import javafx.scene.shape.Circle
+import javafx.scene.text.Font
 
 class CircVertexView(initialPoint: Point2D = 0.0 to 0.0, toggleGroup: ToggleGroup, vertex: Vertex) :
     AbstractVertexView<Vertex, Circle>(initialPoint, Circle(), toggleGroup, vertex) {
@@ -20,6 +21,13 @@ class CircVertexView(initialPoint: Point2D = 0.0 to 0.0, toggleGroup: ToggleGrou
         this.shape.centerXProperty().bind(super.xProperty)
         this.shape.centerYProperty().bind(super.yProperty)
         this.shape.radiusProperty().bind(super.sizeProperty)
+    }
+
+    override fun applyStyling() {
+        super.applyStyling()
+        this.sizeProperty.addListener { _ ->
+            this.label.font = Font("System Regular", this.size / 1.6)
+        }
     }
 
     override fun getIntersection(from: Point2D): Point2D {

@@ -76,8 +76,8 @@ abstract class AbstractVertexView<V : Vertex, S : Shape>(
     private var isDragged = false
 
     init {
-        applyStyling()
-        this.shape.onScroll = EventHandler { scrollEvent ->
+        this.applyStyling()
+        this.group.onScroll = EventHandler { scrollEvent ->
             if (!this.isResizeable) return@EventHandler
             this.size += scrollEvent.deltaY * 0.7
 
@@ -87,7 +87,7 @@ abstract class AbstractVertexView<V : Vertex, S : Shape>(
         addDragListener()
     }
 
-    protected fun applyStyling() {
+    protected open fun applyStyling() {
         this.label.layoutXProperty().bind(xProperty.subtract(this.label.widthProperty().divide(2)))
         this.label.layoutYProperty().bind(yProperty.subtract(this.label.heightProperty().divide(2)))
         this.label.text = vertexLogic.id

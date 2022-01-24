@@ -151,12 +151,13 @@ class Controller : Initializable {
             arrow.endYProperty.set(event.y)
         }
 
+        // TODO use onDragExisted
         fun onMouseReleased(event: MouseEvent) {
             if (event.button != MouseButton.SECONDARY || finished) return
             finished = true
             centerPane.children.remove(arrow)
             val targets = this@Controller.states.filter { it.getDrawable().contains(event.x, event.y) }
-            if (targets.size != 1 || targets.first() === this.source) return
+            if (targets.size != 1 || targets.first() === this.source) return // TODO nodes can overlap
             val target = targets.first()
             // only one directed edge for each (u,v)
             // TODO Move to automata logic

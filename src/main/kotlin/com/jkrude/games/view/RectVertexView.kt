@@ -6,6 +6,7 @@ import com.jkrude.games.logic.Vertex
 import javafx.beans.InvalidationListener
 import javafx.scene.control.ToggleGroup
 import javafx.scene.shape.Rectangle
+import javafx.scene.text.Font
 
 class RectVertexView(initialPoint: Point2D = 0.0 to 0.0, toggleGroup: ToggleGroup, vertex: Vertex) :
     AbstractVertexView<Vertex, Rectangle>(
@@ -25,6 +26,13 @@ class RectVertexView(initialPoint: Point2D = 0.0 to 0.0, toggleGroup: ToggleGrou
         this.shape.yProperty().bind(super.yProperty.subtract(this.sizeProperty.divide(2)))
         this.shape.widthProperty().bind(super.sizeProperty)
         this.shape.heightProperty().bind(super.sizeProperty)
+    }
+
+    override fun applyStyling() {
+        super.applyStyling()
+        this.sizeProperty.addListener { _ ->
+            this.label.font = Font("System Regular", this.size / 2.5)
+        }
     }
 
     override fun getIntersection(from: Point2D): Point2D {
