@@ -7,14 +7,6 @@ import kotlin.math.sqrt
 
 data class MathLine(val m: Double, val n: Double)
 
-private fun Double.sq(): Double = this * this
-
-
-infix fun Point2D.lineTo(to: Point2D): MathLine {
-    val m: Double = (this.y - to.y) / (this.x - to.x)
-    val n = this.y - m * this.x
-    return MathLine(m, n)
-}
 
 fun intersection(g: MathLine, h: MathLine): Point2D {
     val x = (h.n - g.n) / (g.m - h.m)
@@ -66,9 +58,3 @@ fun threePointCircle(
     return h x2y k to r
 }
 
-
-operator fun Point2D.minus(other: Point2D): Point2D = this.x - other.x x2y this.y - other.y
-operator fun Point2D.plus(other: Point2D): Point2D = this.x + other.x x2y this.y + other.y
-operator fun Point2D.times(scalar: Double): Point2D = this.x * scalar x2y this.y * scalar
-
-infix fun Double.x2y(y: Double) = Point2D(this, y)

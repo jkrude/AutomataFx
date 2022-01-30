@@ -10,18 +10,13 @@ open class EdgeView<V : Vertex>(
 ) {
 
     init {
-        arrow.startXProperty.bind(from.xProperty)
-        arrow.startYProperty.bind(from.yProperty)
-        arrow.endXProperty.bind(to.xProperty)
-        arrow.endYProperty.bind(to.yProperty)
+        arrow.start.bind(from.xyProperty)
+        arrow.end.bind(to.xyProperty)
 
-        to.xProperty.addListener { _, _, _ -> arrow.adjustArrow(to.size) }
-        to.yProperty.addListener { _, _, _ -> arrow.adjustArrow(to.size) }
+        to.xyProperty.addListener { _, _, _ -> arrow.adjustArrow(to.size) }
         to.sizeProperty.addListener { _, _, _ -> arrow.adjustArrow(to.size) }
-        from.xProperty.addListener { _, _, _ -> arrow.adjustArrow(to.size) }
-        from.yProperty.addListener { _, _, _ -> arrow.adjustArrow(to.size) }
-        arrow.controlXProperty.addListener { _ -> arrow.adjustArrow(to.size) }
-        arrow.controlYProperty.addListener { _ -> arrow.adjustArrow(to.size) }
+        from.xyProperty.addListener { _, _, _ -> arrow.adjustArrow(to.size) }
+        arrow.control.addListener { _ -> arrow.adjustArrow(to.size) }
         arrow.adjustArrow(to.size)
     }
 

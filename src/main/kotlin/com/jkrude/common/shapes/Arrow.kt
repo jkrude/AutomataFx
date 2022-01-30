@@ -36,28 +36,11 @@ open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0,
         set(value) {
             arrowAngleProperty.set(value)
         }
-    val startXProperty: DoubleProperty = SimpleDoubleProperty(startX)
-    var startX by DelegatedDoubleProperty(startXProperty)
-    val startYProperty: DoubleProperty = SimpleDoubleProperty(startY)
-    var startY by DelegatedDoubleProperty(startYProperty)
-    val endXProperty: DoubleProperty = SimpleDoubleProperty(endX)
-    var endX by DelegatedDoubleProperty(endXProperty)
-    val endYProperty: DoubleProperty = SimpleDoubleProperty(endY)
-    var endY by DelegatedDoubleProperty(endYProperty)
-    val start get() = startX x2y startY
-    val end get() = endX x2y endY
-    val controlXProperty: DoubleProperty = SimpleDoubleProperty()
-    val controlX: Double by DelegatedDoubleProperty(controlXProperty)
-    val controlYProperty: DoubleProperty = SimpleDoubleProperty()
-    var controlY: Double by DelegatedDoubleProperty(controlYProperty)
-    var control
-        get() = controlX x2y controlY
-        set(value) {
-            this.controlXProperty.value = value.x
-            this.controlYProperty.value = value.y
-        }
+    val start: Point2DProperty = Point2DProperty(startX, startY)
+    val end: Point2DProperty = Point2DProperty(endX, endY)
+    val control: Point2DProperty = Point2DProperty()
     val isBendedProperty: BooleanProperty = SimpleBooleanProperty(false)
-    private var isBended: Boolean by DelegatedBooleanProperty(isBendedProperty)
+    private var isBended: Boolean by asValue<Boolean>(isBendedProperty)
 
     override val toggleGroupProperty: ObjectProperty<ToggleGroup> = SimpleObjectProperty()
     override val isSelected: BooleanProperty = object : SimpleBooleanProperty() {
@@ -72,14 +55,14 @@ open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0,
         val rotate = Rotate(0.0, 0.0, 0.0, 1.0, Rotate.Z_AXIS)
         arrowAngleProperty = rotate.angleProperty()
         arrowTip.transforms.add(rotate)
-        arrowTip.layoutXProperty().bind(endXProperty)
-        arrowTip.layoutYProperty().bind(endYProperty)
+        arrowTip.layoutXProperty().bind(end.xProperty)
+        arrowTip.layoutYProperty().bind(end.yProperty)
         super.getChildren().addAll(tail, arrowTip)
 
         // Apply styling
         arrowTip.fillProperty().bind(tail.strokeProperty())
-        val dx: DoubleBinding = endXProperty.subtract(startXProperty)
-        val dy: DoubleBinding = endYProperty.subtract(startYProperty)
+        val dx: DoubleBinding = end.xProperty.subtract(start.xProperty)
+        val dy: DoubleBinding = end.yProperty.subtract(start.yProperty)
         val angleBinding: DoubleBinding = object : DoubleBinding() {
             init {
                 dx.addListener { _ -> this.invalidate() }
@@ -93,36 +76,29 @@ open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0,
         fun tailLogic() {
 
             fun updateTail() {
-                val dist = start.distance(end)
-                val angle = control.angle(start, end)
+                val dist = start.xy.distance(end.xy)
+                val angle = control.xy.angle(start.xy, end.xy)
                 curve.largeArcFlagProperty().set(angle < 90)
                 curve.radiusX = dist / (2 * sin(Math.toRadians(angle)))
             }
-            controlXProperty.bind(startXProperty.subtract(startXProperty.subtract(endXProperty).divide(2)))
-            controlYProperty.bind(startYProperty.subtract(startYProperty.subtract(endYProperty).divide(2)))
+            control.bind(start)
+            control.xProperty.bind(start.xProperty.subtract(start.xProperty.subtract(end.xProperty).divide(2)))
+            control.yProperty.bind(start.yProperty.subtract(start.yProperty.subtract(end.yProperty).divide(2)))
             isBendedProperty.addListener { _ ->
-                controlXProperty.unbind()
-                controlYProperty.unbind()
+                control.unbind()
                 tail.elements.remove(line)
                 tail.elements.add(curve)
-                line.xProperty().unbind()
-                line.yProperty().unbind()
-                curve.xProperty().bind(endXProperty)
-                curve.yProperty().bind(endYProperty)
-                startXProperty.addListener { _ -> updateTail() }
-                startYProperty.addListener { _ -> updateTail() }
-                controlXProperty.addListener { _ -> updateTail() }
-                controlYProperty.addListener { _ -> updateTail() }
-                endXProperty.addListener { _ -> updateTail() }
-                endYProperty.addListener { _ -> updateTail() }
+                line.unbind()
+                curve.bindXY(end)
+                start.addListener { _ -> updateTail() }
+                control.addListener { _ -> updateTail() }
+                end.addListener { _ -> updateTail() }
             }
             tail.stroke = Values.edgeColor
             tail.fill = null // null such that it cant be clicked
             tail.strokeWidth = 3.0
-            moveTo.xProperty().bind(startXProperty)
-            moveTo.yProperty().bind(startYProperty)
-            line.xProperty().bind(endXProperty)
-            line.yProperty().bind(endYProperty)
+            moveTo.bindXY(start)
+            line.bindXY(end)
             curve.radiusYProperty().bind(curve.radiusXProperty())
             val toRight: BooleanBinding = object : BooleanBinding() {
                 init {
@@ -135,26 +111,25 @@ open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0,
 
                 override fun getDependencies(): ObservableList<Property<*>> {
                     return FXCollections.observableArrayList(
-                        startYProperty,
-                        startYProperty,
-                        endXProperty,
-                        endYProperty,
-                        controlXProperty,
-                        controlYProperty
+                        start.yProperty,
+                        start.yProperty,
+                        end.xProperty,
+                        end.yProperty,
+                        control.xProperty,
+                        control.yProperty
                     )
                 }
 
-                override fun computeValue(): Boolean = isToTheRight(start, end, control)
+                override fun computeValue(): Boolean = isToTheRight(start.xy, end.xy, control.xy)
 
             }
             curve.sweepFlagProperty().bind(toRight)
             tail.setOnMouseDragged {
                 isBendedProperty.set(true)
-                controlXProperty.set(it.x)
-                controlYProperty.set(it.y)
+                control.xProperty.set(it.x)
+                control.yProperty.set(it.y)
             }
         }
-
         tailLogic()
     }
 
@@ -164,33 +139,31 @@ open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0,
         arrowTip.layoutYProperty().unbind()
         arrowTip.layoutXProperty().unbind()
         if (!isBended) {
-            val dist = start.distance(end)
+            val dist = start.xy.distance(end.xy)
             val perR = (dist - size) / dist
-            val shortEnd: Point2D = start - (start - end) * perR
-            arrowTip.layoutX = shortEnd.x
-            arrowTip.layoutY = shortEnd.y
+            val shortEnd: Point2D = start.xy - (start.xy - end.xy) * perR
+            arrowTip.layout = shortEnd
             arrowAngle = Math.toDegrees(atan2(end.y - shortEnd.y, end.x - shortEnd.x))
             return
         }
-        val circle = threePointCircle(startX, startY, controlX, controlY, endX, endY)
+        val circle = threePointCircle(start.x, start.y, control.x, control.y, end.x, end.y)
         val cx = circle.first.x
         val cy = circle.first.y
         val cr = circle.second
         val reversedScale = if (curve.sweepFlagProperty().get()) -1 else 1
-        val endAngle = atan2(endY - cy, endX - cx) + reversedScale * size / cr
+        val endAngle = atan2(end.y - cy, end.x - cx) + reversedScale * size / cr
         val shortEndX = cx + cr * cos(endAngle)
         val shortEndY = cy + cr * sin(endAngle)
-        arrowTip.layoutX = shortEndX
-        arrowTip.layoutY = shortEndY
-        arrowAngle = Math.toDegrees(atan2(endY - shortEndY, endX - shortEndX))
+        arrowTip.setLayout(shortEndX, shortEndY)
+        arrowAngle = Math.toDegrees(atan2(end.y - shortEndY, end.x - shortEndX))
     }
 
     fun bend(toRight: Boolean = true) {
         isBended = true
-        val mid = start.midpoint(end)
-        val pivot: Point2D = LineFrom.calcEnd(mid, end, 30.0)
+        val mid = start.xy.midpoint(end.xy)
+        val pivot: Point2D = LineFrom.calcEnd(mid, end.xy, 30.0)
         val angle: Double = if (toRight) -90.0 else 90.0
-        control = Rotate(Math.toDegrees(angle), pivot.x, pivot.y).transform(mid.x, mid.y)
+        control.xy = Rotate(Math.toDegrees(angle), pivot.x, pivot.y).transform(mid.x, mid.y)
     }
 
 }

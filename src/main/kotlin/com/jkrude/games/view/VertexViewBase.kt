@@ -1,9 +1,9 @@
 package com.jkrude.games.view
 
 import com.jkrude.common.DefaultToggle
-import com.jkrude.common.DelegatedBooleanProperty
-import com.jkrude.common.DelegatedDoubleProperty
+import com.jkrude.common.Point2DProperty
 import com.jkrude.common.Values
+import com.jkrude.common.asValue
 import com.jkrude.games.logic.Vertex
 import javafx.beans.InvalidationListener
 import javafx.beans.property.*
@@ -27,10 +27,7 @@ interface VertexView<V : Vertex> {
     val vertexLogic: V
     val sizeProperty: DoubleProperty
     val size: Double
-    val xProperty: DoubleProperty
-    var x: Double
-    val yProperty: DoubleProperty
-    var y: Double
+    val xyProperty: Point2DProperty
 
     fun getIntersection(from: Point2D): Point2D
     fun getDrawable(): Node
@@ -50,10 +47,10 @@ abstract class AbstractVertexView<V : Vertex, S : Shape>(
     DefaultToggle {
 
     final override val draggableProperty: BooleanProperty = SimpleBooleanProperty(true)
-    override var isDraggable: Boolean by DelegatedBooleanProperty(draggableProperty)
+    override var isDraggable: Boolean by asValue(draggableProperty)
 
     final override val resizeableProperty: BooleanProperty = SimpleBooleanProperty(true)
-    override var isResizeable: Boolean by DelegatedBooleanProperty(resizeableProperty)
+    override var isResizeable: Boolean by asValue(resizeableProperty)
 
     override val isSelected: BooleanProperty = object : SimpleBooleanProperty(false) {
         override fun invalidated() {
@@ -62,13 +59,9 @@ abstract class AbstractVertexView<V : Vertex, S : Shape>(
     }
     override val toggleGroupProperty = SimpleObjectProperty(toggleGroup)
     final override val sizeProperty: DoubleProperty = SimpleDoubleProperty(minSize)
-    override var size: Double by DelegatedDoubleProperty(sizeProperty)
+    override var size: Double by asValue(sizeProperty)
 
-    final override val xProperty: DoubleProperty = SimpleDoubleProperty(initialPoint.x)
-    override var x: Double by DelegatedDoubleProperty(xProperty)
-
-    final override val yProperty: DoubleProperty = SimpleDoubleProperty(initialPoint.y)
-    override var y: Double by DelegatedDoubleProperty(yProperty)
+    final override val xyProperty: Point2DProperty = Point2DProperty(initialPoint)
 
     protected open val hoverListener = InvalidationListener {
         if (this.shape.isHover) this.shape.fill = Values.markedColor
@@ -92,8 +85,8 @@ abstract class AbstractVertexView<V : Vertex, S : Shape>(
     }
 
     protected open fun applyStyling() {
-        this.label.layoutXProperty().bind(xProperty.subtract(this.label.widthProperty().divide(2)))
-        this.label.layoutYProperty().bind(yProperty.subtract(this.label.heightProperty().divide(2)))
+        this.label.layoutXProperty().bind(xyProperty.xProperty.subtract(this.label.widthProperty().divide(2)))
+        this.label.layoutYProperty().bind(xyProperty.yProperty.subtract(this.label.heightProperty().divide(2)))
         this.label.text = vertexLogic.id
         this.label.font = Font("System Regular", 16.0)
         this.label.textFill = Color.WHITE
@@ -129,8 +122,8 @@ abstract class AbstractVertexView<V : Vertex, S : Shape>(
         }
         group.setOnMouseDragged { event ->
             if (isDragged && this.isDraggable) {
-                if (event.x > size) x = event.x
-                if (event.y > size) y = event.y
+                if (event.x > size) xyProperty.x = event.x
+                if (event.y > size) xyProperty.y = event.y
             }
         }
         group.setOnMouseReleased { isDragged = false }

@@ -23,8 +23,8 @@ class RectVertexView(initialPoint: Point2D = 0.0 x2y 0.0, toggleGroup: ToggleGro
     }
 
     init {
-        this.shape.xProperty().bind(super.xProperty.subtract(this.sizeProperty.divide(2)))
-        this.shape.yProperty().bind(super.yProperty.subtract(this.sizeProperty.divide(2)))
+        this.shape.xProperty().bind(super.xyProperty.xProperty.subtract(this.sizeProperty.divide(2)))
+        this.shape.yProperty().bind(super.xyProperty.yProperty.subtract(this.sizeProperty.divide(2)))
         this.shape.widthProperty().bind(super.sizeProperty)
         this.shape.heightProperty().bind(super.sizeProperty)
     }
@@ -37,10 +37,12 @@ class RectVertexView(initialPoint: Point2D = 0.0 x2y 0.0, toggleGroup: ToggleGro
     }
 
     override fun getIntersection(from: Point2D): Point2D {
-        val left = (this.x - this.size / 2)
-        val right = (this.x + this.size / 2)
-        val up = (this.y - this.size / 2)
-        val down = (this.y + this.size / 2)
+        val x = this.xyProperty.x
+        val y = this.xyProperty.y
+        val left = (x - this.size / 2)
+        val right = (x + this.size / 2)
+        val up = (y - this.size / 2)
+        val down = (y + this.size / 2)
         val fx = from.x
         val fy = from.y
         val vx = fx - x

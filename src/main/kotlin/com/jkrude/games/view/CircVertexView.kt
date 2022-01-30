@@ -1,6 +1,7 @@
 package com.jkrude.games.view
 
 import com.jkrude.common.Values
+import com.jkrude.common.bindCenter
 import com.jkrude.common.x2y
 import com.jkrude.games.logic.Vertex
 import javafx.beans.InvalidationListener
@@ -18,8 +19,7 @@ class CircVertexView(initialPoint: Point2D = 0.0 x2y 0.0, toggleGroup: ToggleGro
     }
 
     init {
-        this.shape.centerXProperty().bind(super.xProperty)
-        this.shape.centerYProperty().bind(super.yProperty)
+        this.shape.bindCenter(super.xyProperty)
         this.shape.radiusProperty().bind(super.sizeProperty)
     }
 
@@ -33,9 +33,9 @@ class CircVertexView(initialPoint: Point2D = 0.0 x2y 0.0, toggleGroup: ToggleGro
     override fun getIntersection(from: Point2D): Point2D {
         val fromX = from.x
         val fromY = from.y
-        val dist = from.distance(x x2y y)
+        val dist = from.distance(xyProperty.x x2y xyProperty.y)
         val perR = (dist - this.size - 2) / dist
-        return fromX - (fromX - this.x) * perR x2y fromY - (fromY - this.y * perR)
+        return fromX - (fromX - xyProperty.x) * perR x2y fromY - (fromY - xyProperty.y * perR)
     }
 
 }

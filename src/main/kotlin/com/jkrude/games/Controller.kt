@@ -3,6 +3,7 @@ package com.jkrude.games
 import com.jfoenix.controls.JFXToggleButton
 import com.jkrude.common.shapes.Arrow
 import com.jkrude.common.x2y
+import com.jkrude.common.xy
 import com.jkrude.games.logic.Game
 import com.jkrude.games.logic.Vertex
 import com.jkrude.games.view.CircVertexView
@@ -67,10 +68,6 @@ class Controller : Initializable {
         addStateBtn.setOnAction {
             createNewVertex(100.0, 100.0)
         }
-
-        createNewVertex(100.0, 100.0, Player.ONE)
-        createNewVertex(100.0, 200.0, Player.ONE)
-
     }
 
     private fun syncChildrenToStatesAndTransitions() {
@@ -139,10 +136,8 @@ class Controller : Initializable {
 
         init {
             arrow.isVisible = false // only show if dragged too
-            arrow.startXProperty.bind(source.xProperty)
-            arrow.startYProperty.bind(source.yProperty)
-            arrow.endX = source.x
-            arrow.endY = source.y
+            arrow.start.bind(source.xyProperty)
+            arrow.end.xy = source.xyProperty.xy
             centerPane.children.add(arrow)
             arrow.toBack()
         }
@@ -150,8 +145,7 @@ class Controller : Initializable {
         fun onDragged(event: MouseEvent) {
             if (event.button != MouseButton.SECONDARY || finished) return
             if (!arrow.isVisible) arrow.isVisible = true
-            arrow.endXProperty.set(event.x)
-            arrow.endYProperty.set(event.y)
+            arrow.end.xy = event.xy
         }
 
         // TODO use onDragExisted
