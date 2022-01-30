@@ -1,11 +1,15 @@
 package com.jkrude.games.view
 
-import com.jkrude.common.*
+import com.jkrude.common.DefaultToggle
+import com.jkrude.common.DelegatedBooleanProperty
+import com.jkrude.common.DelegatedDoubleProperty
+import com.jkrude.common.Values
 import com.jkrude.games.logic.Vertex
 import javafx.beans.InvalidationListener
 import javafx.beans.property.*
 import javafx.collections.ObservableMap
 import javafx.event.EventHandler
+import javafx.geometry.Point2D
 import javafx.scene.Group
 import javafx.scene.Node
 import javafx.scene.control.Label
@@ -60,10 +64,10 @@ abstract class AbstractVertexView<V : Vertex, S : Shape>(
     final override val sizeProperty: DoubleProperty = SimpleDoubleProperty(minSize)
     override var size: Double by DelegatedDoubleProperty(sizeProperty)
 
-    final override val xProperty: DoubleProperty = SimpleDoubleProperty(initialPoint.first)
+    final override val xProperty: DoubleProperty = SimpleDoubleProperty(initialPoint.x)
     override var x: Double by DelegatedDoubleProperty(xProperty)
 
-    final override val yProperty: DoubleProperty = SimpleDoubleProperty(initialPoint.second)
+    final override val yProperty: DoubleProperty = SimpleDoubleProperty(initialPoint.y)
     override var y: Double by DelegatedDoubleProperty(yProperty)
 
     protected open val hoverListener = InvalidationListener {

@@ -1,15 +1,15 @@
 package com.jkrude.games.view
 
-import com.jkrude.common.Point2D
 import com.jkrude.common.Values
-import com.jkrude.common.distTo
+import com.jkrude.common.x2y
 import com.jkrude.games.logic.Vertex
 import javafx.beans.InvalidationListener
+import javafx.geometry.Point2D
 import javafx.scene.control.ToggleGroup
 import javafx.scene.shape.Circle
 import javafx.scene.text.Font
 
-class CircVertexView(initialPoint: Point2D = 0.0 to 0.0, toggleGroup: ToggleGroup, vertex: Vertex) :
+class CircVertexView(initialPoint: Point2D = 0.0 x2y 0.0, toggleGroup: ToggleGroup, vertex: Vertex) :
     AbstractVertexView<Vertex, Circle>(initialPoint, Circle(), toggleGroup, vertex) {
 
     override val hoverListener: InvalidationListener = InvalidationListener {
@@ -31,11 +31,11 @@ class CircVertexView(initialPoint: Point2D = 0.0 to 0.0, toggleGroup: ToggleGrou
     }
 
     override fun getIntersection(from: Point2D): Point2D {
-        val fromX = from.first
-        val fromY = from.second
-        val dist = (fromX to fromY) distTo (this.x to this.y)
+        val fromX = from.x
+        val fromY = from.y
+        val dist = from.distance(x x2y y)
         val perR = (dist - this.size - 2) / dist
-        return fromX - (fromX - this.x) * perR to fromY - (fromY - this.y) * perR
+        return fromX - (fromX - this.x) * perR x2y fromY - (fromY - this.y * perR)
     }
 
 }

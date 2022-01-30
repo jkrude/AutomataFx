@@ -1,42 +1,63 @@
 package com.jkrude.common.shapes
 
-import com.jkrude.common.DefaultToggle
-import com.jkrude.common.Values
+import com.jkrude.common.*
+import javafx.beans.binding.BooleanBinding
+import javafx.beans.binding.DoubleBinding
 import javafx.beans.property.*
+import javafx.collections.FXCollections
+import javafx.collections.ObservableList
+import javafx.geometry.Point2D
 import javafx.scene.Group
 import javafx.scene.control.ToggleGroup
-import javafx.scene.shape.Line
-import javafx.scene.shape.Polygon
+import javafx.scene.shape.*
 import javafx.scene.transform.Rotate
 import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
 
 open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0, endY: Double = 50.0) : Group(),
     DefaultToggle {
 
-    val startXProperty: DoubleProperty get() = tail.startXProperty()
-    var startX
-        get() = startXProperty.get()
+    private val moveTo = MoveTo()
+    private val curve = ArcTo()
+    private val line = LineTo()
+    private val tail = Path(moveTo, line) // start with straight line
+    private var arrowTip: Polygon = Polygon(
+        0.0,
+        0.0,
+        0.0 - 16,
+        0.0 + 8,
+        0.0 - 16,
+        0.0 - 8
+    )
+    private val arrowAngleProperty: DoubleProperty
+    private var arrowAngle: Double
+        get() = arrowAngleProperty.get()
         set(value) {
-            startXProperty.value = value
+            arrowAngleProperty.set(value)
         }
-    val startYProperty: DoubleProperty get() = tail.startYProperty()
-    var startY
-        get() = startYProperty.get()
+    val startXProperty: DoubleProperty = SimpleDoubleProperty(startX)
+    var startX by DelegatedDoubleProperty(startXProperty)
+    val startYProperty: DoubleProperty = SimpleDoubleProperty(startY)
+    var startY by DelegatedDoubleProperty(startYProperty)
+    val endXProperty: DoubleProperty = SimpleDoubleProperty(endX)
+    var endX by DelegatedDoubleProperty(endXProperty)
+    val endYProperty: DoubleProperty = SimpleDoubleProperty(endY)
+    var endY by DelegatedDoubleProperty(endYProperty)
+    val start get() = startX x2y startY
+    val end get() = endX x2y endY
+    val controlXProperty: DoubleProperty = SimpleDoubleProperty()
+    val controlX: Double by DelegatedDoubleProperty(controlXProperty)
+    val controlYProperty: DoubleProperty = SimpleDoubleProperty()
+    var controlY: Double by DelegatedDoubleProperty(controlYProperty)
+    var control
+        get() = controlX x2y controlY
         set(value) {
-            startYProperty.value = value
+            this.controlXProperty.value = value.x
+            this.controlYProperty.value = value.y
         }
-    val endXProperty: DoubleProperty get() = tail.endXProperty()
-    var endX
-        get() = endXProperty.get()
-        set(value) {
-            endXProperty.value = value
-        }
-    val endYProperty: DoubleProperty get() = tail.endYProperty()
-    var endY
-        get() = endYProperty.get()
-        set(value) {
-            endXProperty.value = value
-        }
+    val isBendedProperty: BooleanProperty = SimpleBooleanProperty(false)
+    private var isBended: Boolean by DelegatedBooleanProperty(isBendedProperty)
 
     override val toggleGroupProperty: ObjectProperty<ToggleGroup> = SimpleObjectProperty()
     override val isSelected: BooleanProperty = object : SimpleBooleanProperty() {
@@ -46,116 +67,131 @@ open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0,
     }
 
 
-    private val tail = Line()
-//    private val tailHandler: TailHandler
-
     init {
-        val dx = endXProperty.subtract(startXProperty)
-        val dy = endYProperty.subtract(startYProperty)
-        // Arrow head
-        val triangle = Polygon(
-            endXProperty.value,
-            endYProperty.value,
-            endXProperty.value - 16,
-            endYProperty.value + 8,
-            endXProperty.value - 16,
-            endYProperty.value - 8
-        )
+        // Arrow tip logic
         val rotate = Rotate(0.0, 0.0, 0.0, 1.0, Rotate.Z_AXIS)
-        // rotate logic for head
-        triangle.transforms.add(rotate)
-        dx.addListener { _, _, newValue ->
-            rotate.angle = getAngle(
-                dy.doubleValue(),
-                newValue.toDouble()
-            )
-        }
-        dy.addListener { _, _, newValue ->
-            rotate.angle = getAngle(
-                newValue.toDouble(),
-                dx.doubleValue()
-            )
-        }
-        // initialize
-        tail.startX = startX
-        tail.startY = startY
-        tail.endX = endX
-        tail.endY = endY
-
-        triangle.layoutX = tail.endX
-        triangle.layoutY = tail.endY
-        triangle.layoutXProperty().bind(endXProperty)
-        triangle.layoutYProperty().bind(endYProperty)
-        super.getChildren().addAll(tail, triangle)
+        arrowAngleProperty = rotate.angleProperty()
+        arrowTip.transforms.add(rotate)
+        arrowTip.layoutXProperty().bind(endXProperty)
+        arrowTip.layoutYProperty().bind(endYProperty)
+        super.getChildren().addAll(tail, arrowTip)
 
         // Apply styling
-        triangle.fillProperty().bind(tail.strokeProperty())
-        tail.stroke = Values.edgeColor
-        tail.fill = null // null such that it cant be clicked
-        tail.strokeWidth = 2.0
+        arrowTip.fillProperty().bind(tail.strokeProperty())
+        val dx: DoubleBinding = endXProperty.subtract(startXProperty)
+        val dy: DoubleBinding = endYProperty.subtract(startYProperty)
+        val angleBinding: DoubleBinding = object : DoubleBinding() {
+            init {
+                dx.addListener { _ -> this.invalidate() }
+                dy.addListener { _ -> this.invalidate() }
+            }
+
+            override fun computeValue(): Double = Math.toDegrees(atan2(dy.get(), dx.get()))
+        }
+        arrowAngleProperty.bind(angleBinding)
+
+        fun tailLogic() {
+
+            fun updateTail() {
+                val dist = start.distance(end)
+                val angle = control.angle(start, end)
+                curve.largeArcFlagProperty().set(angle < 90)
+                curve.radiusX = dist / (2 * sin(Math.toRadians(angle)))
+            }
+            controlXProperty.bind(startXProperty.subtract(startXProperty.subtract(endXProperty).divide(2)))
+            controlYProperty.bind(startYProperty.subtract(startYProperty.subtract(endYProperty).divide(2)))
+            isBendedProperty.addListener { _ ->
+                controlXProperty.unbind()
+                controlYProperty.unbind()
+                tail.elements.remove(line)
+                tail.elements.add(curve)
+                line.xProperty().unbind()
+                line.yProperty().unbind()
+                curve.xProperty().bind(endXProperty)
+                curve.yProperty().bind(endYProperty)
+                startXProperty.addListener { _ -> updateTail() }
+                startYProperty.addListener { _ -> updateTail() }
+                controlXProperty.addListener { _ -> updateTail() }
+                controlYProperty.addListener { _ -> updateTail() }
+                endXProperty.addListener { _ -> updateTail() }
+                endYProperty.addListener { _ -> updateTail() }
+            }
+            tail.stroke = Values.edgeColor
+            tail.fill = null // null such that it cant be clicked
+            tail.strokeWidth = 3.0
+            moveTo.xProperty().bind(startXProperty)
+            moveTo.yProperty().bind(startYProperty)
+            line.xProperty().bind(endXProperty)
+            line.yProperty().bind(endYProperty)
+            curve.radiusYProperty().bind(curve.radiusXProperty())
+            val toRight: BooleanBinding = object : BooleanBinding() {
+                init {
+                    dependencies.forEach {
+                        it.addListener { _ ->
+                            this.invalidate()
+                        }
+                    }
+                }
+
+                override fun getDependencies(): ObservableList<Property<*>> {
+                    return FXCollections.observableArrayList(
+                        startYProperty,
+                        startYProperty,
+                        endXProperty,
+                        endYProperty,
+                        controlXProperty,
+                        controlYProperty
+                    )
+                }
+
+                override fun computeValue(): Boolean = isToTheRight(start, end, control)
+
+            }
+            curve.sweepFlagProperty().bind(toRight)
+            tail.setOnMouseDragged {
+                isBendedProperty.set(true)
+                controlXProperty.set(it.x)
+                controlYProperty.set(it.y)
+            }
+        }
+
+        tailLogic()
     }
 
-    private fun getAngle(dy: Double, dx: Double): Double {
-        return Math.toDegrees(atan2(dy, dx))
+
+    fun adjustArrow(size: Double) {
+        arrowAngleProperty.unbind()
+        arrowTip.layoutYProperty().unbind()
+        arrowTip.layoutXProperty().unbind()
+        if (!isBended) {
+            val dist = start.distance(end)
+            val perR = (dist - size) / dist
+            val shortEnd: Point2D = start - (start - end) * perR
+            arrowTip.layoutX = shortEnd.x
+            arrowTip.layoutY = shortEnd.y
+            arrowAngle = Math.toDegrees(atan2(end.y - shortEnd.y, end.x - shortEnd.x))
+            return
+        }
+        val circle = threePointCircle(startX, startY, controlX, controlY, endX, endY)
+        val cx = circle.first.x
+        val cy = circle.first.y
+        val cr = circle.second
+        val reversedScale = if (curve.sweepFlagProperty().get()) -1 else 1
+        val endAngle = atan2(endY - cy, endX - cx) + reversedScale * size / cr
+        val shortEndX = cx + cr * cos(endAngle)
+        val shortEndY = cy + cr * sin(endAngle)
+        arrowTip.layoutX = shortEndX
+        arrowTip.layoutY = shortEndY
+        arrowAngle = Math.toDegrees(atan2(endY - shortEndY, endX - shortEndX))
     }
 
-//    inner class TailHandler {
-//
-//        private val wasDragged: BooleanProperty = SimpleBooleanProperty(false)
-//
-//        private val updateXonChange = { _: Observable -> updateX() }
-//        private val updateYonChange = { _: Observable -> updateY() }
-//        private val controlCircle = Circle()
-//        init {
-//            controlCircle.centerXProperty().bindBidirectional(tail.controlXProperty())
-//            controlCircle.centerYProperty().bindBidirectional(tail.controlYProperty())
-//            // Styling
-//            controlCircle.radius = 4.0
-//            controlCircle.fillProperty().bind(tail.strokeProperty())
-//            controlCircle.disableProperty().bind(wasDragged.not().or(isSelected.not()))
-//
-//            controlCircle.setOnMouseDragged { event ->
-//                controlCircle.centerX = event.x
-//                controlCircle.centerY = event.y
-//                wasDragged.value = true
-//            }
-//            this@Arrow.children.add(controlCircle)
-//            controlCircle.toFront()
-//            tail.setOnMousePressed {
-//                onMousePressed?.handle(it)
-//                if (it.isPrimaryButtonDown) toggleGroupProperty.value.selectToggle(this@Arrow)
-//            }
-//            updateX()
-//            updateY()
-//            controlCircle.disableProperty().addListener() { _, _ ,new ->
-//                if(new) bind()
-//                else unbind()
-//            }
-//        }
-//
-//        private fun bind(){
-//            startXProperty.addListener(updateXonChange)
-//            startYProperty.addListener(updateYonChange)
-//            endXProperty.addListener(updateXonChange)
-//            endYProperty.addListener(updateYonChange)
-//        }
-//        private fun unbind(){
-//            startXProperty.removeListener(updateXonChange)
-//            startYProperty.removeListener(updateYonChange)
-//            endXProperty.removeListener(updateXonChange)
-//            endYProperty.removeListener(updateYonChange)
-//        }
-//
-//        private fun updateX() {
-//            tail.controlX = startXProperty.get() - (startXProperty.get() - endXProperty.get()) * 0.5
-//        }
-//
-//        private fun updateY() {
-//            tail.controlY = startXProperty.get() - (startYProperty.get() - endYProperty.get()) * 0.5
-//        }
-//
-//    }
-
+    fun bend(toRight: Boolean = true) {
+        isBended = true
+        val mid = start.midpoint(end)
+        val pivot: Point2D = LineFrom.calcEnd(mid, end, 30.0)
+        val angle: Double = if (toRight) -90.0 else 90.0
+        control = Rotate(Math.toDegrees(angle), pivot.x, pivot.y).transform(mid.x, mid.y)
+    }
 
 }
 

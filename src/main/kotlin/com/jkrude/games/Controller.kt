@@ -2,11 +2,11 @@ package com.jkrude.games
 
 import com.jfoenix.controls.JFXToggleButton
 import com.jkrude.common.shapes.Arrow
+import com.jkrude.common.x2y
 import com.jkrude.games.logic.Game
 import com.jkrude.games.logic.Vertex
 import com.jkrude.games.view.CircVertexView
 import com.jkrude.games.view.EdgeView
-import com.jkrude.games.view.RectVertexView
 import com.jkrude.games.view.VertexView
 import javafx.collections.FXCollections
 import javafx.collections.ListChangeListener
@@ -61,16 +61,19 @@ class Controller : Initializable {
             }
         }
         playerSwitch.isSelected = true
-        bindChildrenToStatesAndTransitions()
+        syncChildrenToStatesAndTransitions()
         createMouseListener()
 
         addStateBtn.setOnAction {
             createNewVertex(100.0, 100.0)
         }
 
+        createNewVertex(100.0, 100.0, Player.ONE)
+        createNewVertex(100.0, 200.0, Player.ONE)
+
     }
 
-    private fun bindChildrenToStatesAndTransitions() {
+    private fun syncChildrenToStatesAndTransitions() {
         states.addListener(ListChangeListener { change ->
             while (change.next()) {
                 if (change.wasAdded()) centerPane.children.addAll(change.addedSubList.map { it.getDrawable() })
@@ -162,13 +165,13 @@ class Controller : Initializable {
             // only one directed edge for each (u,v)
             // TODO Move to automata logic
             if (transitionShapes.none { transition -> transition.from == this.source && transition.to == target }) {
-                transitionShapes.add(
-                    EdgeView(
-                        source,
-                        target,
-                        arrow
-                    )
-                )
+                val newEdge = EdgeView(source, target, arrow)
+                transitionShapes.add(newEdge)
+                val otherDir = transitionShapes.firstOrNull { t -> t.to === source && t.from == target }
+                if (otherDir != null && !otherDir.arrow.isBendedProperty.get()) {
+                    newEdge.arrow.bend()
+                    otherDir.arrow.bend()
+                }
             }
 
         }
@@ -209,9 +212,10 @@ class Controller : Initializable {
 
     private fun createNewVertex(x: Double, y: Double, player: Player = currentPlayer) {
         val vertex = Vertex(player, nextID().toString());
-        val vertexView =
-            if (player == Player.ONE) CircVertexView(x to y, toggleGroup, vertex)
-            else RectVertexView(x to y, toggleGroup, vertex)
+        // TODO implement arrow logic for rectangles
+        val vertexView = CircVertexView(x x2y y, toggleGroup, vertex)
+        //if (player == Player.ONE)
+        //else RectVertexView(x x2y  y, toggleGroup, vertex)
         states.add(vertexView)
         toggleGroup.selectToggle(vertexView)
     }
