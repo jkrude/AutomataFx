@@ -7,7 +7,6 @@ import javafx.beans.binding.ObjectBinding
 import javafx.beans.property.DoubleProperty
 import javafx.beans.property.ReadOnlyDoubleProperty
 import javafx.beans.property.SimpleDoubleProperty
-import javafx.beans.value.ChangeListener
 import javafx.geometry.Point2D
 
 class Point2DProperty(x: Double = 0.0, y: Double = 0.0) : Observable {
@@ -69,19 +68,32 @@ class Point2DProperty(x: Double = 0.0, y: Double = 0.0) : Observable {
     var y: Double by asValue(yProperty)
     var xy: Point2D
         get() = x x2y y
-        set(value) {
-            this.x = value.x
-            this.y = value.y
+        set(value) = this.set(value)
+    private val onChangeListener: MutableList<() -> Unit> = ArrayList()
+    private val invalidationListener: MutableList<InvalidationListener> = ArrayList()
+    private var paused = false
+    private val xyListener: InvalidationListener = InvalidationListener {
+        if (!paused) {
+            onChangeListener.forEach { it.invoke() }
+            invalidationListener.forEach { it.invalidated(this) }
         }
+    }
+
+    init {
+        xProperty.addListener(xyListener)
+        yProperty.addListener(xyListener)
+    }
 
     fun set(x: Double, y: Double) {
+        paused = true
         this.x = x
         this.y = y
+        paused = false
+        xyListener.invalidated(this)
     }
 
     fun set(point: Point2D) {
-        this.x = point.x
-        this.y = point.y
+        set(point.x, point.y)
     }
 
     fun bind(otherPoint: Point2DProperty) {
@@ -104,24 +116,20 @@ class Point2DProperty(x: Double = 0.0, y: Double = 0.0) : Observable {
         this.yProperty.unbind()
     }
 
-    fun addListener(p0: ChangeListener<in Number>) {
-        xProperty.addListener(p0)
-        yProperty.addListener(p0)
-    }
-
     override fun addListener(p0: InvalidationListener) {
-        xProperty.addListener(p0)
-        yProperty.addListener(p0)
+        invalidationListener.add(p0)
     }
 
     override fun removeListener(p0: InvalidationListener) {
-        xProperty.removeListener(p0)
-        yProperty.removeListener(p0)
+        invalidationListener.add(p0)
     }
 
-    fun removeListener(p0: ChangeListener<in Number>) {
-        xProperty.removeListener(p0)
-        yProperty.removeListener(p0)
+    fun addOnChange(listener: () -> Unit) {
+        onChangeListener.add(listener)
+    }
+
+    fun removeOnChange(listener: () -> Unit) {
+        onChangeListener.remove(listener)
     }
 
     fun map(transform: (DoubleProperty) -> DoubleExpression): ObjectBinding<Point2D> =

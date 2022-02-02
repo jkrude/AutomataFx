@@ -1,5 +1,9 @@
 package com.jkrude.common
 
+import javafx.beans.binding.ObjectBinding
+import javafx.beans.value.ObservableValue
+import javafx.collections.FXCollections
+import javafx.collections.ObservableList
 import javafx.geometry.Point2D
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -58,3 +62,16 @@ fun threePointCircle(
     return h x2y k to r
 }
 
+fun <T> objectBindingOf(vararg dependencies: ObservableValue<*>, compute: () -> T): ObjectBinding<T> {
+    return object : ObjectBinding<T>() {
+        init {
+            bind(*dependencies)
+        }
+
+        override fun getDependencies(): ObservableList<*> = FXCollections.observableArrayList(*dependencies)
+        override fun computeValue(): T = compute()
+        override fun dispose() {
+            unbind(*dependencies)
+        }
+    }
+}

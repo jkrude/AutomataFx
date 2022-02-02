@@ -21,7 +21,10 @@ import java.net.URL
 import java.util.*
 
 
-abstract class DefaultController<V : LabeledNode, VView : VertexView<V>, E : Edge<V>, EView : EdgeView<V, E>> :
+abstract class DefaultController<
+        V : LabeledNode, VView : VertexView<V>,
+        E : Edge<V>, EView : EdgeView<V, E>
+        > :
     Initializable {
 
 
@@ -102,6 +105,7 @@ abstract class DefaultController<V : LabeledNode, VView : VertexView<V>, E : Edg
     abstract fun createNewTransition(from: VertexView<V>, to: VertexView<V>): EView
     abstract fun onTransitionAdded(edge: EView)
     abstract fun onTransitionRemoved(edge: EView)
+    protected open fun isValidEdge(edge: E): Boolean = transitions.none { it.edgeLogic == edge }
 
     inner class NewEdgeCreator(private val source: VertexView<V>) {
         private val arrow = Arrow()
@@ -130,11 +134,8 @@ abstract class DefaultController<V : LabeledNode, VView : VertexView<V>, E : Edg
             if (targets.size != 1 || targets.first() === this.source) return // TODO nodes can overlap
             val target = targets.first()
             // only one directed edge for each (u,v)
-            // TODO Move to automata logic
-            if (transitions.none { transition -> transition.from == this.source && transition.to == target }) {
-                val newEdge = createNewTransition(source, target)
-                transitions.add(newEdge)
-            }
+            val newEdge: EView = createNewTransition(source, target)
+            if (isValidEdge(newEdge.edgeLogic)) transitions.add(newEdge)
         }
     }
 }
@@ -145,7 +146,7 @@ fun <V : LabeledNode, E : Edge<V>, EView : DefaultEdgeView<V, E>> bendIfNecessar
 ) {
     var adjusted = false
     edges.filter { it.to == edge.from && it !== edge }
-        .filter { !it.isBended() }
+        .filter { !it.isBent() }
         .forEach { it.bend().also { adjusted = true } }
     if (adjusted) edge.bend()
 }

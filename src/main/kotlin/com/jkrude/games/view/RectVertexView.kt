@@ -19,8 +19,7 @@ class RectVertexView(initialPoint: Point2D = 0.0 x2y 0.0, toggleGroup: ToggleGro
     ) {
 
     override val hoverListener: InvalidationListener = InvalidationListener {
-        if (super.group.isHover) this.shape.stroke = Values.markedColor
-        else this.shape.stroke = null
+        this.shape.stroke = if (super.group.isHover) Values.markedColor else null
     }
 
     init {

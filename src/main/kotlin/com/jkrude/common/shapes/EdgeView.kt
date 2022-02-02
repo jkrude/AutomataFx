@@ -27,14 +27,14 @@ open class DefaultEdgeView<V : LabeledNode, E : Edge<V>>(
         arrow.start.bind(from.xyProperty)
         arrow.end.bind(to.xyProperty)
 
-        to.xyProperty.addListener { _, _, _ -> arrow.adjustArrow(to.size) }
-        to.sizeProperty.addListener { _, _, _ -> arrow.adjustArrow(to.size) }
-        from.xyProperty.addListener { _, _, _ -> arrow.adjustArrow(to.size) }
-        arrow.control.addListener { _ -> arrow.adjustArrow(to.size) }
+        to.xyProperty.addOnChange { arrow.adjustArrow(to.size) }
+        to.sizeProperty.addListener { _ -> arrow.adjustArrow(to.size) }
+        from.xyProperty.addOnChange { arrow.adjustArrow(to.size) }
+        arrow.control.addOnChange { arrow.adjustArrow(to.size) }
         arrow.adjustArrow(to.size)
     }
 
-    fun isBended() = arrow.isBendedProperty.get()
+    fun isBent() = arrow.isBentProperty.get()
     fun bend(toRight: Boolean = true) = arrow.bend(toRight)
 
     override fun getDrawable(): Node = this.group

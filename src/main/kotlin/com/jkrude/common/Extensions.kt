@@ -1,9 +1,5 @@
 package com.jkrude.common
 
-import javafx.beans.binding.ObjectBinding
-import javafx.beans.value.ObservableValue
-import javafx.collections.FXCollections
-import javafx.collections.ObservableList
 import javafx.geometry.Point2D
 import javafx.scene.Node
 import javafx.scene.input.MouseEvent
@@ -61,21 +57,5 @@ val MouseEvent.xy get() = this.x x2y this.y
 fun Circle.bindCenter(point: Point2DProperty) =
     Point2DProperty.bindPoints(this.centerXProperty(), this.centerYProperty(), point)
 
-fun <T> objectBindingOf(vararg dependencies: ObservableValue<*>, compute: () -> T): ObjectBinding<T> {
-    return object : ObjectBinding<T>() {
-        init {
-            bind(*dependencies)
-        }
-
-        override fun getDependencies(): ObservableList<*> = FXCollections.observableArrayList(*dependencies)
-        override fun computeValue(): T = compute()
-        override fun dispose() {
-            unbind(*dependencies)
-        }
-    }
-}
-
 operator fun Point2D.component1(): Double = this.x
 operator fun Point2D.component2(): Double = this.y
-
-
