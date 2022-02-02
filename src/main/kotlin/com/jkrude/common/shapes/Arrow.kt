@@ -49,6 +49,10 @@ open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0,
         }
     }
 
+    constructor(from: Point2DProperty, to: Point2DProperty) : this(from.x, from.y, to.x, to.y) {
+        start.bind(from)
+        end.bind(to)
+    }
 
     init {
         // Arrow tip logic

@@ -1,17 +1,17 @@
-package com.jkrude.games.view
+package com.jkrude.common.shapes
 
 import com.jkrude.common.Values
 import com.jkrude.common.bindCenter
+import com.jkrude.common.logic.LabeledNode
 import com.jkrude.common.x2y
-import com.jkrude.games.logic.Vertex
 import javafx.beans.InvalidationListener
 import javafx.geometry.Point2D
 import javafx.scene.control.ToggleGroup
 import javafx.scene.shape.Circle
 import javafx.scene.text.Font
 
-class CircVertexView(initialPoint: Point2D = 0.0 x2y 0.0, toggleGroup: ToggleGroup, vertex: Vertex) :
-    AbstractVertexView<Vertex, Circle>(initialPoint, Circle(), toggleGroup, vertex) {
+open class CircleView<V : LabeledNode>(initialPoint: Point2D = 0.0 x2y 0.0, toggleGroup: ToggleGroup, vertex: V) :
+    AbstractVertexView<V, Circle>(initialPoint, Circle(), toggleGroup, vertex) {
 
     override val hoverListener: InvalidationListener = InvalidationListener {
         if (super.group.isHover) this.shape.stroke = Values.markedColor
@@ -37,5 +37,4 @@ class CircVertexView(initialPoint: Point2D = 0.0 x2y 0.0, toggleGroup: ToggleGro
         val perR = (dist - this.size - 2) / dist
         return fromX - (fromX - xyProperty.x) * perR x2y fromY - (fromY - xyProperty.y * perR)
     }
-
 }

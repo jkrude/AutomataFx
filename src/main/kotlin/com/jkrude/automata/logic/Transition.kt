@@ -1,9 +1,11 @@
 package com.jkrude.automata.logic
 
-open class Transition(val from: State, val to: State, val symbol: Char) {
+import com.jkrude.common.logic.Edge
+
+open class Transition(from: State, to: State, var symbol: String) : Edge<State>(from, to) {
 
     override fun equals(other: Any?): Boolean {
-        if(other !is Transition) return false
+        if (other !is Transition) return false
         return other.from == this.from && other.to == this.to && other.symbol == this.symbol
 
     }

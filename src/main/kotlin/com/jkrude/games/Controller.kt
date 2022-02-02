@@ -1,31 +1,29 @@
 package com.jkrude.games
 
 import com.jfoenix.controls.JFXToggleButton
-import com.jkrude.common.shapes.Arrow
+import com.jkrude.common.DefaultController
+import com.jkrude.common.bendIfNecessary
+import com.jkrude.common.logic.Edge
+import com.jkrude.common.shapes.AbstractVertexView
+import com.jkrude.common.shapes.CircleView
+import com.jkrude.common.shapes.DefaultEdgeView
+import com.jkrude.common.shapes.VertexView
 import com.jkrude.common.x2y
-import com.jkrude.common.xy
 import com.jkrude.games.logic.Game
 import com.jkrude.games.logic.Vertex
-import com.jkrude.games.view.CircVertexView
-import com.jkrude.games.view.EdgeView
-import com.jkrude.games.view.VertexView
-import javafx.collections.FXCollections
-import javafx.collections.ListChangeListener
-import javafx.collections.ObservableList
 import javafx.event.EventHandler
 import javafx.fxml.FXML
-import javafx.fxml.Initializable
 import javafx.scene.control.Button
-import javafx.scene.control.ToggleGroup
-import javafx.scene.input.KeyCode
-import javafx.scene.input.MouseButton
 import javafx.scene.input.MouseEvent
-import javafx.scene.layout.AnchorPane
-import javafx.scene.layout.BorderPane
 import java.net.URL
 import java.util.*
 
-class Controller : Initializable {
+private typealias VView = AbstractVertexView<Vertex, *>
+private typealias EView = DefaultEdgeView<Vertex, Edge<Vertex>>
+private typealias VEdge = Edge<Vertex>
+
+class Controller :
+    DefaultController<Vertex, VView, VEdge, EView>() {
 
     @FXML
     lateinit var playerSwitch: JFXToggleButton
@@ -36,22 +34,12 @@ class Controller : Initializable {
     @FXML
     lateinit var confirmBtn: Button
 
-    @FXML
-    lateinit var borderPane: BorderPane
-
-    @FXML
-    lateinit var centerPane: AnchorPane
-
-    private val states: ObservableList<VertexView<Vertex>> = FXCollections.observableArrayList(ArrayList())
-    private val transitionShapes: ObservableList<EdgeView<Vertex>> = FXCollections.observableArrayList(ArrayList())
-    private val toggleGroup = ToggleGroup()
-    private var edgeCreator: NewEdgeCreator? = null
     private var selectionProcess: SelectionProcess? = null
     private var currentPlayer: Player = Player.ONE
     private var vertexCounter = 1U
 
     override fun initialize(p0: URL?, p1: ResourceBundle?) {
-
+        super.initialize(p0, p1)
         playerSwitch.setOnAction {
             if (playerSwitch.isSelected) {
                 playerSwitch.text = "Player One"
@@ -62,114 +50,16 @@ class Controller : Initializable {
             }
         }
         playerSwitch.isSelected = true
-        syncChildrenToStatesAndTransitions()
-        createMouseListener()
-
         addStateBtn.setOnAction {
             createNewVertex(100.0, 100.0)
         }
     }
 
-    private fun syncChildrenToStatesAndTransitions() {
-        states.addListener(ListChangeListener { change ->
-            while (change.next()) {
-                if (change.wasAdded()) centerPane.children.addAll(change.addedSubList.map { it.getDrawable() })
-                if (change.wasRemoved()) centerPane.children.removeAll(change.removed.map { it.getDrawable() })
-            }
-        })
-        transitionShapes.addListener(ListChangeListener { change ->
-            while (change.next()) {
-                if (change.wasAdded()) {
-                    for (edge in change.addedSubList) {
-                        edge.from.vertexLogic.addEdgeTo(edge.to.vertexLogic)
-                        centerPane.children.add(edge.arrow)
-                        edge.arrow.toBack()
-                    }
-                }
-                if (change.wasRemoved()) {
-                    change.removed.forEach { it.from.vertexLogic.removeEdgeTo(it.to.vertexLogic) }
-                    centerPane.children.removeAll(change.removed.map { it.arrow })
-                }
-            }
-        })
-    }
-
-    private fun createMouseListener() {
-        centerPane.setOnMouseClicked {
-            if (it.button == MouseButton.PRIMARY) {
-                if (it.clickCount == 2) createNewVertex(it.x, it.y)
-                else if (it.target == centerPane) toggleGroup.selectToggle(null)
-            }
-        }
-        centerPane.setOnMousePressed {
-            if (it.button == MouseButton.SECONDARY) {
-                val targets = states.filter { s -> s.getDrawable().contains(it.x, it.y) }
-                if (targets.size != 1) return@setOnMousePressed
-                val newEdgeCreator = NewEdgeCreator(targets.first())
-                centerPane.setOnMouseReleased(newEdgeCreator::onMouseReleased)
-                centerPane.setOnMouseDragged(newEdgeCreator::onDragged)
-                this.edgeCreator = newEdgeCreator
-            }
-        }
-
-        borderPane.setOnKeyPressed { event ->
-            if (event.code == KeyCode.DELETE && toggleGroup.selectedToggleProperty().get() != null) {
-                when (val selected = toggleGroup.selectedToggleProperty().get()) {
-                    is VertexView<*> -> {
-                        transitionShapes.removeIf { it.from == selected || it.to == selected }
-                        states.remove(selected)
-                    }
-                    is EdgeView<*> -> transitionShapes.remove(selected)
-                    else -> throw IllegalStateException("$selected is neither state nor transition")
-                }
-            }
-        }
-    }
 
     private fun nextID(): UInt {
         return this.vertexCounter.also { this.vertexCounter++ }
     }
 
-    private inner class NewEdgeCreator(val source: VertexView<Vertex>) {
-        val arrow = Arrow()
-        var finished = false
-
-        init {
-            arrow.isVisible = false // only show if dragged too
-            arrow.start.bind(source.xyProperty)
-            arrow.end.xy = source.xyProperty.xy
-            centerPane.children.add(arrow)
-            arrow.toBack()
-        }
-
-        fun onDragged(event: MouseEvent) {
-            if (event.button != MouseButton.SECONDARY || finished) return
-            if (!arrow.isVisible) arrow.isVisible = true
-            arrow.end.xy = event.xy
-        }
-
-        // TODO use onDragExisted
-        fun onMouseReleased(event: MouseEvent) {
-            if (event.button != MouseButton.SECONDARY || finished) return
-            finished = true
-            centerPane.children.remove(arrow)
-            val targets = this@Controller.states.filter { it.getDrawable().contains(event.x, event.y) }
-            if (targets.size != 1 || targets.first() === this.source) return // TODO nodes can overlap
-            val target = targets.first()
-            // only one directed edge for each (u,v)
-            // TODO Move to automata logic
-            if (transitionShapes.none { transition -> transition.from == this.source && transition.to == target }) {
-                val newEdge = EdgeView(source, target, arrow)
-                transitionShapes.add(newEdge)
-                val otherDir = transitionShapes.firstOrNull { t -> t.to === source && t.from == target }
-                if (otherDir != null && !otherDir.arrow.isBendedProperty.get()) {
-                    newEdge.arrow.bend()
-                    otherDir.arrow.bend()
-                }
-            }
-
-        }
-    }
 
     private inner class SelectionProcess() {
 
@@ -184,7 +74,7 @@ class Controller : Initializable {
         init {
             toggleGroup.selectToggle(null)
             states.forEach { it.startSelectionProcess() }
-            transitionShapes.forEach { it.arrow.isDisable = true }
+            //transitions.forEach { it.arrow.isDisable = true }
             centerPane.addEventFilter(MouseEvent.MOUSE_CLICKED, eventFilter)
             confirmBtn.isDisable = false
             confirmBtn.isVisible = true
@@ -195,7 +85,7 @@ class Controller : Initializable {
 
         private fun endSelection() {
             states.forEach { it.endSelectionProcess() }
-            transitionShapes.forEach { it.arrow.isDisable = false }
+            //transitions.forEach { it.arrow.isDisable = false }
             centerPane.removeEventFilter(MouseEvent.MOUSE_CLICKED, eventFilter)
             confirmBtn.isDisable = true
             confirmBtn.isVisible = false
@@ -204,10 +94,10 @@ class Controller : Initializable {
 
     }
 
-    private fun createNewVertex(x: Double, y: Double, player: Player = currentPlayer) {
-        val vertex = Vertex(player, nextID().toString());
+    override fun createNewVertex(x: Double, y: Double) {
+        val vertex = Vertex(currentPlayer, nextID().toString());
         // TODO implement arrow logic for rectangles
-        val vertexView = CircVertexView(x x2y y, toggleGroup, vertex)
+        val vertexView = CircleView(x x2y y, toggleGroup, vertex)
         //if (player == Player.ONE)
         //else RectVertexView(x x2y  y, toggleGroup, vertex)
         states.add(vertexView)
@@ -225,5 +115,19 @@ class Controller : Initializable {
         val attractor = game.attr(currentPlayer, selVertex.toSet())
         states.filter { it.vertexLogic in attractor }.forEach { it.setMarked() }
     }
+
+    override fun onTransitionAdded(edge: EView) {
+        edge.from.vertexLogic.addEdgeTo(edge.to.vertexLogic)
+        bendIfNecessary(super.transitions, edge)
+    }
+
+    override fun onTransitionRemoved(edge: EView) {
+        edge.from.vertexLogic.removeEdgeTo(edge.to.vertexLogic)
+    }
+
+    override fun createNewTransition(from: VertexView<Vertex>, to: VertexView<Vertex>): EView {
+        return EView(from, to, VEdge(from.vertexLogic, to.vertexLogic))
+    }
+
 }
 

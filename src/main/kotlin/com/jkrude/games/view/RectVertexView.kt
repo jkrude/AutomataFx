@@ -1,6 +1,7 @@
 package com.jkrude.games.view
 
 import com.jkrude.common.Values
+import com.jkrude.common.shapes.AbstractVertexView
 import com.jkrude.common.x2y
 import com.jkrude.games.logic.Vertex
 import javafx.beans.InvalidationListener

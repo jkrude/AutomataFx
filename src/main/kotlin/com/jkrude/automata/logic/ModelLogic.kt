@@ -23,7 +23,7 @@ open class Automata(
         val path = mutableListOf(initialState)
         var currState = initialState
         for (sym in word) {
-            val options = currState.transitions.filter { it.symbol == sym }
+            val options = currState.edges.filter { it.symbol.first() == sym }
             if (options.size > 1) throw IllegalStateException("Non deterministic automata model")
             if (options.isEmpty()) return path
             path.add(options.first().to)

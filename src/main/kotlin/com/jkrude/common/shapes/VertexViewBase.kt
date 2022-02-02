@@ -1,10 +1,10 @@
-package com.jkrude.games.view
+package com.jkrude.common.shapes
 
 import com.jkrude.common.DefaultToggle
 import com.jkrude.common.Point2DProperty
 import com.jkrude.common.Values
 import com.jkrude.common.asValue
-import com.jkrude.games.logic.Vertex
+import com.jkrude.common.logic.LabeledNode
 import javafx.beans.InvalidationListener
 import javafx.beans.property.*
 import javafx.collections.ObservableMap
@@ -18,7 +18,7 @@ import javafx.scene.paint.Color
 import javafx.scene.shape.Shape
 import javafx.scene.text.Font
 
-interface VertexView<V : Vertex> {
+interface VertexView<V : LabeledNode> {
 
     val draggableProperty: BooleanProperty
     var isDraggable: Boolean
@@ -36,7 +36,7 @@ interface VertexView<V : Vertex> {
     fun endSelectionProcess()
 }
 
-abstract class AbstractVertexView<V : Vertex, S : Shape>(
+abstract class AbstractVertexView<V : LabeledNode, S : Shape>(
     initialPoint: Point2D,
     val shape: S,
     toggleGroup: ToggleGroup,
@@ -87,7 +87,7 @@ abstract class AbstractVertexView<V : Vertex, S : Shape>(
     protected open fun applyStyling() {
         this.label.layoutXProperty().bind(xyProperty.xProperty.subtract(this.label.widthProperty().divide(2)))
         this.label.layoutYProperty().bind(xyProperty.yProperty.subtract(this.label.heightProperty().divide(2)))
-        this.label.text = vertexLogic.id
+        this.label.text = vertexLogic.getLabel()
         this.label.font = Font("System Regular", 16.0)
         this.label.textFill = Color.WHITE
         this.shape.fill = Values.primaryColor
