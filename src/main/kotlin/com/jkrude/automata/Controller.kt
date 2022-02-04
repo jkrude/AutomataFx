@@ -11,8 +11,10 @@ import com.jkrude.common.x2y
 
 class Controller : DefaultController<State, StateView, Transition, LabeledEdge>() {
 
+    private val idSeq = generateSequence(0) { it + 1 }.iterator()
+
     override fun createNewVertex(x: Double, y: Double) {
-        val state = State("v")
+        val state = State("q${idSeq.next()}")
         val stateView = StateView(x x2y y, super.toggleGroup, state)
         states.add(stateView)
         toggleGroup.selectToggle(stateView)

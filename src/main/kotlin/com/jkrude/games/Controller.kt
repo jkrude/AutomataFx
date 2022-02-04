@@ -36,7 +36,7 @@ class Controller :
 
     private var selectionProcess: SelectionProcess? = null
     private var currentPlayer: Player = Player.ONE
-    private var vertexCounter = 1U
+    private var idSeq = generateSequence(0) { it + 1 }.iterator()
 
     override fun initialize(p0: URL?, p1: ResourceBundle?) {
         super.initialize(p0, p1)
@@ -54,12 +54,6 @@ class Controller :
             createNewVertex(100.0, 100.0)
         }
     }
-
-
-    private fun nextID(): UInt {
-        return this.vertexCounter.also { this.vertexCounter++ }
-    }
-
 
     private inner class SelectionProcess() {
 
@@ -95,7 +89,7 @@ class Controller :
     }
 
     override fun createNewVertex(x: Double, y: Double) {
-        val vertex = Vertex(currentPlayer, nextID().toString());
+        val vertex = Vertex(currentPlayer, idSeq.next().toString());
         // TODO implement arrow logic for rectangles
         val vertexView = CircleView(x x2y y, toggleGroup, vertex)
         //if (player == Player.ONE)
