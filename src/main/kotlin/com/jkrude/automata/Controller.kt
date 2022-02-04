@@ -21,7 +21,7 @@ class Controller : DefaultController<State, StateView, Transition, LabeledEdge>(
     }
 
     override fun createNewTransition(from: VertexView<State>, to: VertexView<State>): LabeledEdge {
-        return LabeledEdge(from, to, Transition(from.vertexLogic, to.vertexLogic, ""))
+        return LabeledEdge(from, to, Transition(from.vertexLogic, to.vertexLogic, ""), toggleGroup)
     }
 
     override fun onTransitionAdded(edge: LabeledEdge) {

@@ -120,7 +120,7 @@ class Controller :
     }
 
     override fun createNewTransition(from: VertexView<Vertex>, to: VertexView<Vertex>): EView {
-        return EView(from, to, VEdge(from.vertexLogic, to.vertexLogic))
+        return EView(from, to, VEdge(from.vertexLogic, to.vertexLogic), toggleGroup)
     }
 
 }

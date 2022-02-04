@@ -41,7 +41,7 @@ abstract class DefaultController<
 
     override fun initialize(p0: URL?, p1: ResourceBundle?) {
         syncChildrenToStatesAndTransitions()
-        createMouseListener()
+        createEventListener()
     }
 
     private fun syncChildrenToStatesAndTransitions() {
@@ -68,7 +68,7 @@ abstract class DefaultController<
         })
     }
 
-    private fun createMouseListener() {
+    private fun createEventListener() {
         centerPane.addEventHandler(MouseEvent.MOUSE_CLICKED) {
             if (it.button == MouseButton.PRIMARY) {
                 if (it.clickCount == 2) createNewVertex(it.x, it.y)
@@ -86,19 +86,22 @@ abstract class DefaultController<
             }
 
         }
-        borderPane.setOnKeyPressed { event ->
-            if (event.code == KeyCode.DELETE && toggleGroup.selectedToggleProperty().get() != null) {
-                when (val selected = toggleGroup.selectedToggleProperty().get()) {
-                    is VertexView<*> -> {
-                        transitions.removeIf { it.from == selected || it.to == selected }
-                        states.remove(selected)
+        borderPane.sceneProperty().isNotNull.addListener { _ ->
+            if (borderPane.scene != null) {
+                borderPane.scene.setOnKeyPressed { event ->
+                    if (event.code == KeyCode.DELETE && toggleGroup.selectedToggleProperty().get() != null) {
+                        when (val selected = toggleGroup.selectedToggleProperty().get()) {
+                            is VertexView<*> -> {
+                                transitions.removeIf { it.from == selected || it.to == selected }
+                                states.remove(selected)
+                            }
+                            is EdgeView<*, *> -> transitions.remove(selected)
+                            else -> throw IllegalStateException("$selected is neither state nor transition")
+                        }
                     }
-                    is EdgeView<*, *> -> transitions.remove(selected)
-                    else -> throw IllegalStateException("$selected is neither state nor transition")
                 }
             }
         }
-
     }
 
     abstract fun createNewVertex(x: Double, y: Double)

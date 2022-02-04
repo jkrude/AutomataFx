@@ -3,18 +3,20 @@ package com.jkrude.common.shapes
 import com.jkrude.common.*
 import javafx.beans.binding.DoubleBinding
 import javafx.beans.binding.ObjectBinding
-import javafx.beans.property.*
+import javafx.beans.property.BooleanProperty
+import javafx.beans.property.DoubleProperty
+import javafx.beans.property.ObjectProperty
+import javafx.beans.property.SimpleBooleanProperty
 import javafx.geometry.Point2D
 import javafx.scene.Group
-import javafx.scene.control.ToggleGroup
+import javafx.scene.paint.Paint
 import javafx.scene.shape.*
 import javafx.scene.transform.Rotate
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 
-open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0, endY: Double = 50.0) : Group(),
-    DefaultToggle {
+open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0, endY: Double = 50.0) : Group() {
 
     private val moveTo = MoveTo()
     private val curve = ArcTo()
@@ -39,9 +41,9 @@ open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0,
     val control: Point2DProperty = Point2DProperty()
     val isBentProperty: BooleanProperty = SimpleBooleanProperty(false)
     private var isBent: Boolean by asValue<Boolean>(isBentProperty)
-
-    override val toggleGroupProperty: ObjectProperty<ToggleGroup> = SimpleObjectProperty()
-    override val isSelected: BooleanProperty = object : SimpleBooleanProperty() {
+    val colorProperty: ObjectProperty<Paint> = this.tail.strokeProperty()
+    var color: Paint by asValue(colorProperty)
+    val isSelected: BooleanProperty = object : SimpleBooleanProperty() {
         override fun invalidated() {
             this@Arrow.tail.stroke = if (this.get()) Values.selectedColor else Values.edgeColor
         }
