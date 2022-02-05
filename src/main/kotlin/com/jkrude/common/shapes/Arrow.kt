@@ -37,11 +37,13 @@ open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0,
             arrowAngleProperty.set(value)
         }
     val start: Point2DProperty = Point2DProperty(startX, startY)
+    private val _control: Point2DProperty = Point2DProperty()
+    val control: ReadOnlyPoint2DProperty = _control.asReadOnly()
     val end: Point2DProperty = Point2DProperty(endX, endY)
-    val control: Point2DProperty = Point2DProperty()
     val isBentProperty: BooleanProperty = SimpleBooleanProperty(false)
     private var isBent: Boolean by asValue<Boolean>(isBentProperty)
     val isBendable: BooleanProperty = SimpleBooleanProperty(true)
+
     val colorProperty: ObjectProperty<Paint> = this.tail.strokeProperty()
     var color: Paint by asValue(colorProperty)
     val isSelected: BooleanProperty = object : SimpleBooleanProperty() {
@@ -77,21 +79,21 @@ open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0,
 
             fun updateTail() {
                 val dist = start.xy.distance(end.xy)
-                val angle = control.xy.angle(start.xy, end.xy)
+                val angle = _control.xy.angle(start.xy, end.xy)
                 curve.largeArcFlagProperty().set(angle < 90)
                 curve.radiusX = dist / (2 * sin(Math.toRadians(angle)))
             }
-            control.bind(start)
-            control.xProperty.bind(start.xProperty.subtract(start.xProperty.subtract(end.xProperty).divide(2)))
-            control.yProperty.bind(start.yProperty.subtract(start.yProperty.subtract(end.yProperty).divide(2)))
+            _control.bind(start)
+            _control.xProperty.bind(start.xProperty.subtract(start.xProperty.subtract(end.xProperty).divide(2)))
+            _control.yProperty.bind(start.yProperty.subtract(start.yProperty.subtract(end.yProperty).divide(2)))
             isBentProperty.addListener { _ ->
-                control.unbind()
+                _control.unbind()
                 tail.elements.remove(line)
                 tail.elements.add(curve)
                 line.unbind()
                 curve.bindXY(end)
                 start.addOnChange(::updateTail)
-                control.addOnChange(::updateTail)
+                _control.addOnChange(::updateTail)
                 end.addOnChange(::updateTail)
             }
             tail.stroke = Values.edgeColor
@@ -105,17 +107,17 @@ open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0,
                 start.yProperty,
                 end.xProperty,
                 end.yProperty,
-                control.xProperty,
-                control.yProperty
+                _control.xProperty,
+                _control.yProperty
             ) {
-                isToTheRight(start.xy, end.xy, control.xy)
+                isToTheRight(start.xy, end.xy, _control.xy)
             }
 
             curve.sweepFlagProperty().bind(toRight)
             tail.setOnMouseDragged {
                 if(!isBendable.get()) return@setOnMouseDragged
                 isBentProperty.set(true)
-                control.set(it.x, it.y)
+                _control.set(it.x, it.y)
             }
         }
         tailLogic()
@@ -134,7 +136,7 @@ open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0,
             arrowAngle = Math.toDegrees(atan2(end.y - shortEnd.y, end.x - shortEnd.x))
             return
         }
-        val circle = threePointCircle(start.x, start.y, control.x, control.y, end.x, end.y)
+        val circle = threePointCircle(start.x, start.y, _control.x, _control.y, end.x, end.y)
         val cx = circle.first.x
         val cy = circle.first.y
         val cr = circle.second
@@ -151,7 +153,7 @@ open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0,
         val mid = start.xy.midpoint(end.xy)
         val pivot: Point2D = LineFrom.calcEnd(mid, end.xy, 30.0)
         val angle: Double = if (toRight) -90.0 else 90.0
-        control.xy = Rotate(Math.toDegrees(angle), pivot.x, pivot.y).transform(mid.x, mid.y)
+        _control.xy = Rotate(Math.toDegrees(angle), pivot.x, pivot.y).transform(mid.x, mid.y)
     }
 
 }
