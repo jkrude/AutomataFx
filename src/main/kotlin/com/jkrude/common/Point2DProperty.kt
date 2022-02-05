@@ -134,7 +134,7 @@ class Point2DProperty(x: Double = 0.0, y: Double = 0.0) : Observable {
 
     fun map(transform: (DoubleProperty) -> DoubleExpression): ObjectBinding<Point2D> =
         objectBindingOf(xProperty, yProperty) {
-            transform(xProperty).get() x2y transform(xProperty).get()
+            transform(xProperty).get() x2y transform(yProperty).get()
         }
 
 }

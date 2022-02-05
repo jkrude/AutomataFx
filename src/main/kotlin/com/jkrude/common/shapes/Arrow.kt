@@ -41,6 +41,7 @@ open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0,
     val control: Point2DProperty = Point2DProperty()
     val isBentProperty: BooleanProperty = SimpleBooleanProperty(false)
     private var isBent: Boolean by asValue<Boolean>(isBentProperty)
+    val isBendable: BooleanProperty = SimpleBooleanProperty(true)
     val colorProperty: ObjectProperty<Paint> = this.tail.strokeProperty()
     var color: Paint by asValue(colorProperty)
     val isSelected: BooleanProperty = object : SimpleBooleanProperty() {
@@ -112,6 +113,7 @@ open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0,
 
             curve.sweepFlagProperty().bind(toRight)
             tail.setOnMouseDragged {
+                if(!isBendable.get()) return@setOnMouseDragged
                 isBentProperty.set(true)
                 control.set(it.x, it.y)
             }
