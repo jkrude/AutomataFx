@@ -1,10 +1,13 @@
 package com.jkrude.common
 
 import javafx.beans.Observable
+import javafx.beans.binding.DoubleBinding
 import javafx.beans.binding.DoubleExpression
 import javafx.beans.binding.ObjectBinding
 import javafx.beans.property.DoubleProperty
 import javafx.beans.property.ReadOnlyDoubleProperty
+import javafx.collections.FXCollections
+import javafx.collections.ObservableList
 import javafx.geometry.Point2D
 
 interface ReadOnlyPoint2DProperty : Observable {
@@ -54,4 +57,13 @@ interface ReadOnlyPoint2DProperty : Observable {
             objectBindingOf(xProperty, yProperty) {
                 transform(xProperty).get() x2y transform(yProperty).get()
             }
+    fun distance(otherPoint: ReadOnlyPoint2DProperty): DoubleBinding =
+        doubleBindingOf(
+            this.xProperty,
+            this.yProperty,
+            otherPoint.xProperty,
+            otherPoint.yProperty
+        ) {
+            this.xy.distance(otherPoint.xy)
+        }
 }

@@ -17,10 +17,16 @@ class LabeledEdge(from: VertexView<State>, to: VertexView<State>, edgeLogic: Tra
     private val label = Label(edgeLogic.symbol)
 
     init {
-        label.bindLayout(super.arrow.control)
+        label.bindLayout(super.midAnchor)
         this.label.font = Font.font("Regular", FontWeight.BOLD, 16.0)
         this.label.textFill = Values.edgeColor
         super.group.children.add(label)
+
+        // TODO Otherwise, FromToEdge or SelfLoop are selected
+        super.group.setOnMousePressed {
+            super.toggleGroupProperty().get().selectToggle(this)
+            it.consume()
+        }
         label.textProperty().addListener { _ ->
             if (label.text.all { it.isLetter() })
                 edgeLogic.symbol = label.text

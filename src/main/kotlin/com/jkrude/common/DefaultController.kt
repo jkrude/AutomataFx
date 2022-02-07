@@ -95,7 +95,7 @@ abstract class DefaultController<
                     transitions.removeIf { it.from == selected || it.to == selected }
                     states.remove(selected as VertexView<*>)
                 }
-                is EdgeView<*, *> -> transitions.remove(selected as EdgeView<*, *>)
+                is EdgeView<*, *> -> transitions.remove(selected)
                 else -> throw IllegalStateException("$selected is neither state nor transition")
             }
         }
@@ -142,7 +142,7 @@ abstract class DefaultController<
             finished = true
             centerPane.children.remove(arrow)
             val targets = this@DefaultController.states.filter { it.getDrawable().contains(event.x, event.y) }
-            if (targets.size != 1 || targets.first() === this.source) return // TODO nodes can overlap
+            if (targets.size != 1) return // TODO nodes can overlap
             val target = targets.first()
             val newEdge: EView = createNewTransition(source, target)
             if (isValidEdge(newEdge.edgeLogic)) transitions.add(newEdge)

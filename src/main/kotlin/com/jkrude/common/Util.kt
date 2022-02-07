@@ -1,10 +1,13 @@
 package com.jkrude.common
 
+import javafx.beans.binding.DoubleBinding
 import javafx.beans.binding.ObjectBinding
 import javafx.beans.value.ObservableValue
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
 import javafx.geometry.Point2D
+import java.nio.channels.Pipe
+import java.util.function.BinaryOperator.maxBy
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -61,6 +64,8 @@ fun threePointCircle(
     val r = sqrt(sqrOfR)
     return h x2y k to r
 }
+fun threePointCircle(start: Point2D, control: Point2D, end: Point2D) =
+        threePointCircle(start.x, start.y, control.x, control.y, end.x, end.y)
 
 fun <T> objectBindingOf(vararg dependencies: ObservableValue<*>, compute: () -> T): ObjectBinding<T> {
     return object : ObjectBinding<T>() {
@@ -74,4 +79,36 @@ fun <T> objectBindingOf(vararg dependencies: ObservableValue<*>, compute: () -> 
             unbind(*dependencies)
         }
     }
+}
+fun doubleBindingOf(vararg dependencies: ObservableValue<*>, compute: () -> Double): DoubleBinding {
+    return object : DoubleBinding() {
+        init {
+            bind(*dependencies)
+        }
+
+        override fun computeValue(): Double {
+            return compute()
+        }
+
+        override fun getDependencies(): ObservableList<*> = FXCollections.observableArrayList(*dependencies)
+
+        override fun dispose() {
+            unbind(*dependencies)
+        }
+    }
+}
+
+//stackoverflow.com/questions/3349125/circle-circle-intersection-points
+fun circleCircleIntersection(c1: Point2D, r1: Double, c2: Point2D, r2: Double): List<Point2D> {
+    val d = c1.distance(c2)
+    if (d > r1 + r2) return emptyList()
+    val a: Double = (r1.sq() - r2.sq() + d.sq()) / (2 * d)
+    val p2 = c1 - ((c1 - c2) * a) / d
+    if (d == r1 + r2) return listOf(p2)
+    val h = sqrt(r1.sq() - a.sq())
+    val x3 = p2.x + h * (c2.y - c1.y) / d
+    val y3 = p2.y - h * (c2.x - c1.x) / d
+    val x4 = p2.x - h * (c2.y - c1.y) / d
+    val y4 = p2.y + h * (c2.x - c1.x) / d
+    return listOf(x4 x2y y4, x3 x2y y3)
 }

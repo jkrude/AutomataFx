@@ -26,6 +26,6 @@ open class Vertex(val player: Player, private val id: String, edgesTo: List<Vert
     override fun getLabel(): String = id
 }
 
-open class PVertex(player: Player, id: String, val parity: UInt, edgesTo: List<Vertex> = ArrayList()) : Vertex(
+open class PVertex(player: Player, id: String, val parity: Int, edgesTo: List<Vertex> = ArrayList()) : Vertex(
     player, id, edgesTo
 )
