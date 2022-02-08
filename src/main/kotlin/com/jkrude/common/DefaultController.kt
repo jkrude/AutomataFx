@@ -28,7 +28,7 @@ abstract class DefaultController<
         V : LabeledNode, VView : VertexView<V>,
         E : Edge<V>, EView : EdgeView<V, E>
         > :
-        Initializable {
+    Initializable {
 
 
     @FXML
@@ -50,22 +50,27 @@ abstract class DefaultController<
     private fun syncChildrenToStatesAndTransitions() {
         states.addListener(ListChangeListener { change ->
             while (change.next()) {
-                if (change.wasAdded()) centerPane.children.addAll(change.addedSubList.map { it.getDrawable() })
-                if (change.wasRemoved()) centerPane.children.removeAll(change.removed.map { it.getDrawable() })
+                if (change.wasAdded()) {
+                    centerPane.children.addAll(change.addedSubList.map { it.getDrawable() })
+                    change.addedSubList.forEach { onVertexAdded(it) }
+                }
+                if (change.wasRemoved()) {
+                    centerPane.children.removeAll(change.removed.map { it.getDrawable() })
+                    change.removed.forEach { onVertexRemoved(it) }
+                }
             }
         })
         transitions.addListener(ListChangeListener { change ->
             while (change.next()) {
                 if (change.wasAdded()) {
                     for (edge in change.addedSubList) {
-                        onTransitionAdded(edge)
                         centerPane.children.add(edge.getDrawable())
-                        edge.getDrawable().toBack()
+                        onTransitionAdded(edge)
                     }
                 }
                 if (change.wasRemoved()) {
-                    change.removed.forEach { onTransitionRemoved(it) }
                     centerPane.children.removeAll(change.removed.map { it.getDrawable() })
+                    change.removed.forEach { onTransitionRemoved(it) }
                 }
             }
         })
@@ -73,7 +78,7 @@ abstract class DefaultController<
 
     protected open val onMouseClicked = EventHandler<MouseEvent> { event ->
         if (event.button == MouseButton.PRIMARY) {
-            if (event.clickCount == 2) createNewVertex(event.x, event.y)
+            if (event.clickCount == 2) states.add(createNewVertex(event.x, event.y))
             else if (event.target == centerPane) toggleGroup.selectToggle(null)
         }
     }
@@ -90,14 +95,20 @@ abstract class DefaultController<
     }
     protected open val onKeyPressed = EventHandler<KeyEvent> { event ->
         if (event.code == KeyCode.DELETE && toggleGroup.selectedToggleProperty().get() != null) {
-            when (val selected: Toggle = toggleGroup.selectedToggleProperty().get()) {
-                is VertexView<*> -> {
-                    transitions.removeIf { it.from == selected || it.to == selected }
-                    states.remove(selected as VertexView<*>)
-                }
-                is EdgeView<*, *> -> transitions.remove(selected)
-                else -> throw IllegalStateException("$selected is neither state nor transition")
+            toggleGroup.selectedToggleProperty().get()?.let {
+                removeSelected(it)
             }
+        }
+    }
+
+    protected open fun removeSelected(selected: Toggle) {
+        when (toggleGroup.selectedToggleProperty().get()) {
+            is VertexView<*> -> {
+                transitions.removeIf { it.from == selected || it.to == selected }
+                states.remove(selected as VertexView<*>)
+            }
+            is EdgeView<*, *> -> transitions.remove(selected)
+            else -> throw IllegalStateException("$selected is neither state nor transition")
         }
     }
 
@@ -112,10 +123,19 @@ abstract class DefaultController<
         }
     }
 
-    abstract fun createNewVertex(x: Double, y: Double)
+    abstract fun createNewVertex(x: Double, y: Double): VView
     abstract fun createNewTransition(from: VertexView<V>, to: VertexView<V>): EView
-    abstract fun onTransitionAdded(edge: EView)
-    abstract fun onTransitionRemoved(edge: EView)
+    open fun onTransitionAdded(edge: EView) {
+        edge.getDrawable().toBack()
+    }
+
+    open fun onTransitionRemoved(edge: EView) {}
+
+    open fun onVertexRemoved(vertex: VertexView<V>) {}
+    open fun onVertexAdded(vertex: VertexView<V>) {
+        toggleGroup.selectToggle(vertex)
+    }
+
     protected open fun isValidEdge(edge: E): Boolean = transitions.none { it.edgeLogic == edge }
 
     protected inner class NewEdgeCreator(private val source: VertexView<V>) {
@@ -151,12 +171,12 @@ abstract class DefaultController<
 }
 
 fun <V : LabeledNode, E : Edge<V>, EView : DefaultEdgeView<V, E>> bendIfNecessary(
-        edges: ObservableList<out EView>,
-        edge: EView
+    edges: ObservableList<out EView>,
+    edge: EView
 ) {
     var adjusted = false
     edges.filter { it.to == edge.from && it.from == edge.to && it !== edge }
-            .filter { !it.isBent() }
-            .forEach { it.bend().also { adjusted = true } }
+        .filter { !it.isBent() }
+        .forEach { it.bend().also { adjusted = true } }
     if (adjusted) edge.bend()
 }

@@ -18,7 +18,7 @@ import javafx.scene.paint.Color
 import javafx.scene.shape.Shape
 import javafx.scene.text.Font
 
-interface VertexView<V : LabeledNode> {
+interface VertexView<V : LabeledNode> : DefaultToggle {
 
     val draggableProperty: BooleanProperty
     var isDraggable: Boolean
@@ -43,8 +43,7 @@ abstract class AbstractVertexView<V : LabeledNode, S : Shape>(
     final override val vertexLogic: V,
     private val minSize: Double = 30.0,
     private val maxSize: Double = 100.0
-) : VertexView<V>,
-    DefaultToggle {
+) : VertexView<V> {
 
     final override val draggableProperty: BooleanProperty = SimpleBooleanProperty(true)
     override var isDraggable: Boolean by asValue(draggableProperty)

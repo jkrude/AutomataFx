@@ -51,7 +51,7 @@ class Controller :
         }
         playerSwitch.isSelected = true
         addStateBtn.setOnAction {
-            createNewVertex(100.0, 100.0)
+            states.add(createNewVertex(100.0, 100.0))
         }
     }
 
@@ -88,14 +88,10 @@ class Controller :
 
     }
 
-    override fun createNewVertex(x: Double, y: Double) {
+    override fun createNewVertex(x: Double, y: Double): VView {
         val vertex = Vertex(currentPlayer, idSeq.next().toString());
         // TODO implement arrow logic for rectangles
-        val vertexView = CircleView(x x2y y, toggleGroup, vertex)
-        //if (player == Player.ONE)
-        //else RectVertexView(x x2y  y, toggleGroup, vertex)
-        states.add(vertexView)
-        toggleGroup.selectToggle(vertexView)
+        return CircleView(x x2y y, toggleGroup, vertex)
     }
 
     fun startAttractorProcess() {

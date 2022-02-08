@@ -7,12 +7,11 @@ import com.jkrude.automata.shapes.StartEdge
 import com.jkrude.automata.shapes.StateView
 import com.jkrude.common.*
 import com.jkrude.common.shapes.Arrow
-import com.jkrude.common.shapes.EdgeView
 import com.jkrude.common.shapes.VertexView
 import javafx.event.EventHandler
 import javafx.scene.control.Toggle
-import javafx.scene.input.*
-import java.util.*
+import javafx.scene.input.MouseButton
+import javafx.scene.input.MouseEvent
 
 class Controller : DefaultController<State, StateView, Transition, LabeledEdge>() {
 
@@ -37,49 +36,36 @@ class Controller : DefaultController<State, StateView, Transition, LabeledEdge>(
                 centerPane.setOnMouseReleased(s::onMouseReleased)
                 centerPane.setOnMouseDragged(s::onDragged)
                 startEdgeCreator = s
-            } else {
-                val newEdgeCreator = NewEdgeCreator(targets.first())
-                centerPane.setOnMouseReleased(newEdgeCreator::onMouseReleased)
-                centerPane.setOnMouseDragged(newEdgeCreator::onDragged)
-                super.edgeCreator = newEdgeCreator
-            }
-
-        }
-    }
-    override val onKeyPressed: EventHandler<KeyEvent> = EventHandler { event ->
-        if (event.code == KeyCode.DELETE && toggleGroup.selectedToggleProperty().get() != null) {
-            when (val selected: Toggle = toggleGroup.selectedToggleProperty().get()) {
-                is VertexView<*> -> {
-                    transitions.removeIf { it.from == selected || it.to == selected }
-                    states.remove(selected as VertexView<*>)
-                    if(startEdge?.initialState == selected){
-                        startEdge = null
-                    }
-                }
-                is EdgeView<*, *> -> transitions.remove(selected as EdgeView<*, *>)
-                is StartEdge -> startEdge = null
-                else -> throw IllegalStateException("$selected is neither state nor transition")
-            }
+            } else super.onMousePressed.handle(event)
         }
     }
 
-    override fun createNewVertex(x: Double, y: Double) {
+    override fun removeSelected(selected: Toggle) {
+        if (selected is StartEdge) startEdge = null
+        else super.removeSelected(selected)
+    }
+
+    override fun createNewVertex(x: Double, y: Double): StateView {
         val state = State("q${idSeq.next()}")
-        val stateView = StateView(x x2y y, super.toggleGroup, state)
-        states.add(stateView)
-        toggleGroup.selectToggle(stateView)
+        return StateView(x x2y y, super.toggleGroup, state)
     }
 
     override fun createNewTransition(from: VertexView<State>, to: VertexView<State>): LabeledEdge {
         return LabeledEdge(from, to, Transition(from.vertexLogic, to.vertexLogic, ""), toggleGroup)
     }
 
+    override fun onVertexRemoved(vertex: VertexView<State>) {
+        if (vertex == startEdge?.initialState) startEdge = null
+    }
+
     override fun onTransitionAdded(edge: LabeledEdge) {
+        super.onTransitionAdded(edge)
         edge.from.vertexLogic.addEdge(edge.edgeLogic)
         bendIfNecessary(super.transitions, edge)
     }
 
     override fun onTransitionRemoved(edge: LabeledEdge) {
+        super.onTransitionRemoved(edge)
         edge.from.vertexLogic.removeEdge(edge.edgeLogic)
     }
 
@@ -111,6 +97,5 @@ class Controller : DefaultController<State, StateView, Transition, LabeledEdge>(
             event.consume()
         }
     }
-
 
 }
