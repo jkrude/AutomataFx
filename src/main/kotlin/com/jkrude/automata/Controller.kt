@@ -62,6 +62,7 @@ class Controller : DefaultController<State, StateView, Transition, LabeledEdge>(
         super.onTransitionAdded(edge)
         edge.from.vertexLogic.addEdge(edge.edgeLogic)
         bendIfNecessary(super.transitions, edge)
+        bendIfNecessarySameDirection(edge)
     }
 
     override fun onTransitionRemoved(edge: LabeledEdge) {
@@ -96,6 +97,13 @@ class Controller : DefaultController<State, StateView, Transition, LabeledEdge>(
             startEdge = StartEdge(this.start, targets.first(), this@Controller.toggleGroup)
             event.consume()
         }
+    }
+
+    private fun bendIfNecessarySameDirection(newEdge: LabeledEdge) {
+        transitions.filter { (it.to == newEdge.to && it.from == newEdge.from) }
+            .filter { !it.isBent() }
+            .takeIf { it.size > 1 }
+            ?.forEachIndexed { idx, edge -> edge.bend(idx % 2 == 0) }
     }
 
 }
