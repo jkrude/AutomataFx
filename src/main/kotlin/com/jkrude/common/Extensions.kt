@@ -3,6 +3,7 @@ package com.jkrude.common
 import javafx.geometry.Point2D
 import javafx.scene.Node
 import javafx.scene.input.MouseEvent
+import javafx.scene.paint.Color
 import javafx.scene.shape.*
 
 fun Double.sq(): Double = this * this
@@ -63,3 +64,7 @@ fun Circle.bindCenter(point: ReadOnlyPoint2DProperty) =
 
 operator fun Point2D.component1(): Double = this.x
 operator fun Point2D.component2(): Double = this.y
+val Color.css: String
+    get() {
+        return "#" + this.toString().drop(2)
+    }

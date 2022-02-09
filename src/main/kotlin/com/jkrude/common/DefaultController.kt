@@ -118,7 +118,7 @@ abstract class DefaultController<
 
         borderPane.sceneProperty().isNotNull.addListener { _ ->
             if (borderPane.scene != null) {
-                borderPane.scene.onKeyPressed = onKeyPressed
+                borderPane.scene.addEventFilter(KeyEvent.KEY_PRESSED, onKeyPressed)
             }
         }
     }
@@ -127,6 +127,7 @@ abstract class DefaultController<
     abstract fun createNewTransition(from: VertexView<V>, to: VertexView<V>): EView
     open fun onTransitionAdded(edge: EView) {
         edge.getDrawable().toBack()
+        toggleGroup.selectToggle(edge)
     }
 
     open fun onTransitionRemoved(edge: EView) {}
