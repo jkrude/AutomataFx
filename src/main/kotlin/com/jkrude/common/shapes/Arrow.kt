@@ -9,6 +9,7 @@ import javafx.beans.property.ObjectProperty
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.geometry.Point2D
 import javafx.scene.Group
+import javafx.scene.input.MouseEvent
 import javafx.scene.paint.Paint
 import javafx.scene.shape.*
 import javafx.scene.transform.Rotate
@@ -40,17 +41,26 @@ open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0,
     private val _control: Point2DProperty = Point2DProperty()
     val control: ReadOnlyPoint2DProperty = _control.asReadOnly()
     val end: Point2DProperty = Point2DProperty(endX, endY)
+
+    // Save control as relative to start and end:
+    //relative distance from start and projection of control onto (end - start)
+    private var relativeDist: Double = 0.5
+
+    // Distance from projection of control to control
+    // negative if control to the right of line between start and end
+    private var perpendicularPart: Double = 0.0
+
     val isBentProperty: BooleanProperty = SimpleBooleanProperty(false)
     private var isBent: Boolean by asValue<Boolean>(isBentProperty)
-    val isBendable: BooleanProperty = SimpleBooleanProperty(true)
-
-    val colorProperty: ObjectProperty<Paint> = this.tail.strokeProperty()
-    var color: Paint by asValue(colorProperty)
+    val isBendableProperty: BooleanProperty = SimpleBooleanProperty(true)
+    var isBendable: Boolean by asValue(isBendableProperty)
     val isSelected: BooleanProperty = object : SimpleBooleanProperty() {
         override fun invalidated() {
             this@Arrow.tail.stroke = if (this.get()) Values.selectedColor else Values.edgeColor
         }
     }
+    val colorProperty: ObjectProperty<Paint> = this.tail.strokeProperty()
+    var color: Paint by asValue(colorProperty)
 
     constructor(from: Point2DProperty, to: Point2DProperty) : this(from.x, from.y, to.x, to.y) {
         start.bind(from)
@@ -65,7 +75,6 @@ open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0,
         arrowTip.bindLayout(end)
         super.getChildren().addAll(tail, arrowTip)
 
-        // Apply styling
         arrowTip.fillProperty().bind(tail.strokeProperty())
         val dx: DoubleBinding = end.xProperty.subtract(start.xProperty)
         val dy: DoubleBinding = end.yProperty.subtract(start.yProperty)
@@ -76,14 +85,6 @@ open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0,
 
 
         fun tailLogic() {
-
-            fun updateTail() {
-                val dist = start.xy.distance(end.xy)
-                val angle = _control.xy.angle(start.xy, end.xy)
-                curve.largeArcFlagProperty().set(angle < 90)
-                curve.radiusX = dist / (2 * sin(Math.toRadians(angle)))
-            }
-            _control.bind(start)
             _control.xProperty.bind(start.xProperty.subtract(start.xProperty.subtract(end.xProperty).divide(2)))
             _control.yProperty.bind(start.yProperty.subtract(start.yProperty.subtract(end.yProperty).divide(2)))
             isBentProperty.addListener { _ ->
@@ -92,9 +93,8 @@ open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0,
                 tail.elements.add(curve)
                 line.unbind()
                 curve.bindXY(end)
-                start.addOnChange(::updateTail)
-                _control.addOnChange(::updateTail)
-                end.addOnChange(::updateTail)
+                start.addOnChange(::updateTailFromStartEnd)
+                end.addOnChange(::updateTailFromStartEnd)
             }
             tail.stroke = Values.edgeColor
             tail.fill = null // null such that it cant be clicked
@@ -114,13 +114,46 @@ open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0,
             }
 
             curve.sweepFlagProperty().bind(toRight)
-            tail.setOnMouseDragged {
-                if(!isBendable.get()) return@setOnMouseDragged
-                isBentProperty.set(true)
-                _control.set(it.x, it.y)
-            }
+            tail.setOnMouseDragged(::updateTailOnDragged)
         }
         tailLogic()
+    }
+
+    private fun updateTailOnDragged(it: MouseEvent) {
+        if (!isBendable) return
+        isBentProperty.set(true)
+        _control.set(it.x, it.y)
+        updateTailFromControl()
+    }
+
+    private fun updateTail() {
+        val dist = start.xy.distance(end.xy)
+        val angle = _control.xy.angle(start.xy, end.xy)
+        curve.largeArcFlagProperty().set(angle < 90)
+        curve.radiusX = dist / (2 * sin(Math.toRadians(angle)))
+    }
+
+    private fun updateTailFromControl() {
+        calculateControlRelative()
+        updateTail()
+    }
+
+    private fun updateTailFromStartEnd() {
+        // Recalculate control
+        val intersection = start.xy - (start.xy - end.xy) * relativeDist
+        val vec = (end.xy - start.xy)
+        val orth: Point2D = ((vec.y * -1.0) x2y vec.x).normalize()
+        _control.xy = intersection + (orth * perpendicularPart)
+        updateTail()
+    }
+
+    private fun calculateControlRelative() {
+        val cVec = control.xy - start.xy
+        val projection = cVec projectOn (end.xy - start.xy)
+        val intersection = start.xy + projection
+        this.relativeDist = start.xy.distance(intersection) / (start.xy.distance(end.xy))
+        this.relativeDist *= if (control.x < start.x && start.x < end.x || control.x > start.x && start.x > end.x) -1.0 else 1.0
+        this.perpendicularPart = control.xy.distance(intersection) * if (curve.isSweepFlag) -1.0 else 1.0
     }
 
 

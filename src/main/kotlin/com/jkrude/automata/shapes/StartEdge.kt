@@ -18,7 +18,7 @@ class StartEdge(val start: Point2DProperty, val initialState: StateView, toggleG
     override val toggleGroupProperty: ObjectProperty<ToggleGroup> = SimpleObjectProperty(toggleGroup)
 
     init {
-        arrow.isBendable.value = false
+        arrow.isBendable = false
         arrow.setOnMouseDragged {
             start.unbind()
             start.x = it.x

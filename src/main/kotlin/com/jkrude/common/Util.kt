@@ -6,8 +6,6 @@ import javafx.beans.value.ObservableValue
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
 import javafx.geometry.Point2D
-import java.nio.channels.Pipe
-import java.util.function.BinaryOperator.maxBy
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -24,6 +22,14 @@ fun intersection(g: MathLine, h: MathLine): Point2D {
 fun isToTheRight(start: Point2D, end: Point2D, toCheck: Point2D): Boolean {
     return ((end.x - start.x) * (toCheck.y - start.y) - (end.y - start.y) * (toCheck.x - start.x)) < 0
 }
+
+// Returns the vector representing the vector projection of this on b
+// https://en.wikipedia.org/wiki/Vector_projection
+infix fun Point2D.projectOn(b: Point2D): Point2D {
+    val n = b.normalize()
+    return (n * this.dotProduct(n))
+}
+
 
 // Taken from https://www.geeksforgeeks.org/equation-of-circle-when-three-points-on-the-circle-are-given/
 fun threePointCircle(
