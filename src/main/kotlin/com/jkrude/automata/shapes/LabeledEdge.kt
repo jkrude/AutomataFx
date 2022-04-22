@@ -20,21 +20,23 @@ import kotlin.math.ceil
 class LabeledEdge(from: VertexView<State>, to: VertexView<State>, edgeLogic: Transition, toggleGroup: ToggleGroup) :
     DefaultEdgeView<State, Transition>(from, to, edgeLogic, toggleGroup) {
 
-    private val label = TextField(edgeLogic.symbol)
+    private val textField = TextField(edgeLogic.symbol)
     private var offset = Point2D.ZERO
 
     init {
+        // On creation set textField text = " " for blinking cursor.
+        // Note that selection (toggle group) is not equal to focus (nodes).
         fun styling() {
-            label.style = """
+            textField.style = """
             -fx-border-color: none;
             -fx-text-fill: ${Values.primaryColor.css};
             -fx-font-size: 14px;
             -fx-font-weight: bold;
             -fx-accent: ${Values.selectedColor.css};
         """.trimIndent()
-            // Background only visible if focused or non empty
-            val background = objectBindingOf(label.focusedProperty(), label.textProperty().isEmpty) {
-                if (!label.isFocused && label.text.isEmpty()) {
+            // Display textField only if not blank or edge selected
+            val background = objectBindingOf(super.selectedProperty()) {
+                if (!super.isSelected() && textField.text.isBlank()) {
                     Background(BackgroundFill(Color.TRANSPARENT, CornerRadii(10.0), Insets.EMPTY))
                 } else {
                     Background(
@@ -46,21 +48,21 @@ class LabeledEdge(from: VertexView<State>, to: VertexView<State>, edgeLogic: Tra
                     )
                 }
             }
-            label.backgroundProperty().bind(background)
-            label.alignment = Pos.CENTER
-            label.textProperty().length().addListener { _, _, new ->
+            textField.backgroundProperty().bind(background)
+            textField.alignment = Pos.CENTER
+            textField.textProperty().length().addListener { _, _, new ->
                 // prefColumnCount always to large -> 0.6 magic number for this font
-                label.prefColumnCount = ceil(new.toDouble() * 0.6).toInt()
+                textField.prefColumnCount = ceil(new.toDouble() * 0.6).toInt()
             }
         }
 
         fun positioning() {
             super.midAnchor.addOnChange(::calcPosition)
             calcPosition()
-            label.addEventFilter(MouseEvent.MOUSE_DRAGGED) {
+            textField.addEventFilter(MouseEvent.MOUSE_DRAGGED) {
                 val mxy = (it.sceneX - 130) x2y it.sceneY  // TODO 130 == size of navigation rail
                 val d = mxy.distance(super.midAnchor.xy)
-                label.layout = // restrain to a maximum distance of 100 to the anchor
+                textField.layout = // restrain to a maximum distance of 100 to the anchor
                     if (d < 100.0) mxy
                     else super.midAnchor.xy - (super.midAnchor.xy - mxy) * (100.0 / d)
                 offset = super.midAnchor.xy - mxy
@@ -71,12 +73,12 @@ class LabeledEdge(from: VertexView<State>, to: VertexView<State>, edgeLogic: Tra
         fun selection() {
             super.selectedProperty().addListener { _ ->
                 if (super.isSelected()) {
-                    label.requestFocus()
-                    if (label.text.isEmpty()) label.text = " " // -> blinking cursor
+                    textField.requestFocus()
+                    if (textField.text.isEmpty()) textField.text = " " // -> blinking cursor
                 } else {
-                    label.text = label.text.trim()
-                    label.deselect()
-                    super.group.requestFocus() // un-focus text field
+                    textField.text = textField.text.trim()
+                    textField.deselect()
+                    if (textField.isFocused) super.group.requestFocus() // avoid cursor by un-focusing
                 }
             }
             // TODO Otherwise, FromToEdge or SelfLoop are selected
@@ -84,21 +86,21 @@ class LabeledEdge(from: VertexView<State>, to: VertexView<State>, edgeLogic: Tra
                 super.toggleGroupProperty().get().selectToggle(this)
                 it.consume()
             }
-            label.setOnMousePressed { super.toggleGroupProperty.get().selectToggle(this) }
+            textField.setOnMousePressed { super.toggleGroupProperty.get().selectToggle(this) }
         }
 
         styling()
         positioning()
         selection()
-        label.textProperty().addListener { _ ->
-            if (label.text.all { it.isLetter() })
-                edgeLogic.symbol = label.text
+        textField.textProperty().addListener { _ ->
+            if (textField.text.all { it.isLetter() })
+                edgeLogic.symbol = textField.text
         }
-        super.group.children.add(label)
+        super.group.children.add(textField)
     }
 
     private fun calcPosition() {
-        label.layoutX = super.midAnchor.x - offset.x
-        label.layoutY = super.midAnchor.y - offset.y
+        textField.layoutX = super.midAnchor.x - offset.x
+        textField.layoutY = super.midAnchor.y - offset.y
     }
 }
