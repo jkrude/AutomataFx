@@ -17,6 +17,13 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 
+/**
+ * Draggable Arrow that can be moved through 2D.
+ * The arrow can be manipulated by the start and end position or by dragging the tail.
+ * There are two states depending on whether the tail was dragged or not.
+ * At the moment only circular endpoints are supported.
+ * The curvature of the bended arrow is defined as a circle over three points.
+ */
 open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0, endY: Double = 50.0) : Group() {
 
     private val moveTo = MoveTo()
@@ -39,7 +46,7 @@ open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0,
         }
     val start: Point2DProperty = Point2DProperty(startX, startY)
     private val _control: Point2DProperty = Point2DProperty()
-    val control: ReadOnlyPoint2DProperty = _control.asReadOnly()
+    val control: ReadOnlyPoint2DProperty = _control
     val end: Point2DProperty = Point2DProperty(endX, endY)
 
     // Save control as relative to start and end:
@@ -68,7 +75,7 @@ open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0,
     }
 
     init {
-        // Arrow tip logic
+        // tip logic
         val rotate = Rotate(0.0, 0.0, 0.0, 1.0, Rotate.Z_AXIS)
         arrowAngleProperty = rotate.angleProperty()
         arrowTip.transforms.add(rotate)
@@ -84,39 +91,40 @@ open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0,
         arrowAngleProperty.bind(angleBinding)
 
 
-        fun tailLogic() {
-            _control.xProperty.bind(start.xProperty.subtract(start.xProperty.subtract(end.xProperty).divide(2)))
-            _control.yProperty.bind(start.yProperty.subtract(start.yProperty.subtract(end.yProperty).divide(2)))
-            isBentProperty.addListener { _ ->
-                _control.unbind()
-                tail.elements.remove(line)
-                tail.elements.add(curve)
-                line.unbind()
-                curve.bindXY(end)
-                start.addOnChange(::updateTailFromStartEnd)
-                end.addOnChange(::updateTailFromStartEnd)
-            }
-            tail.stroke = Values.edgeColor
-            tail.fill = null // null such that it cant be clicked
-            tail.strokeWidth = 3.0
-            moveTo.bindXY(start)
-            line.bindXY(end)
-            curve.radiusYProperty().bind(curve.radiusXProperty())
-            val toRight: ObjectBinding<Boolean> = objectBindingOf(
-                start.yProperty,
-                start.yProperty,
-                end.xProperty,
-                end.yProperty,
-                _control.xProperty,
-                _control.yProperty
-            ) {
-                isToTheRight(start.xy, end.xy, _control.xy)
-            }
-
-            curve.sweepFlagProperty().bind(toRight)
-            tail.setOnMouseDragged(::updateTailOnDragged)
+        // tail logic
+        // If not bend -> draw a straight line and set control on the middle of this line.
+        // Otherwise draw arc by three points and update control by methods.
+        // Currently if bend once there is no going back to not-bend.
+        _control.xProperty.bind(start.xProperty.subtract(start.xProperty.subtract(end.xProperty).divide(2)))
+        _control.yProperty.bind(start.yProperty.subtract(start.yProperty.subtract(end.yProperty).divide(2)))
+        isBentProperty.addListener { _ ->
+            _control.unbind()
+            tail.elements.remove(line)
+            tail.elements.add(curve)
+            line.unbind()
+            curve.bindXY(end)
+            start.addOnChange(::updateTailFromStartEnd)
+            end.addOnChange(::updateTailFromStartEnd)
         }
-        tailLogic()
+        tail.stroke = Values.edgeColor
+        tail.fill = null // null such that it can't be clicked
+        tail.strokeWidth = 3.0  // styling
+        moveTo.bindXY(start)
+        line.bindXY(end)
+        curve.radiusYProperty().bind(curve.radiusXProperty())
+        val toRight: ObjectBinding<Boolean> = objectBindingOf(
+            start.yProperty,
+            start.yProperty,
+            end.xProperty,
+            end.yProperty,
+            _control.xProperty,
+            _control.yProperty
+        ) {
+            isToTheRight(start.xy, end.xy, _control.xy)
+        }
+
+        curve.sweepFlagProperty().bind(toRight)
+        tail.setOnMouseDragged(::updateTailOnDragged)
     }
 
     private fun updateTailOnDragged(it: MouseEvent) {
@@ -134,12 +142,14 @@ open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0,
     }
 
     private fun updateTailFromControl() {
+        // Called when control was changed.
         calculateControlRelative()
         updateTail()
     }
 
     private fun updateTailFromStartEnd() {
-        // Recalculate control
+        // Recalculate control from the saved relative position.
+        // Called when eiter start or end was changed.
         val intersection = start.xy - (start.xy - end.xy) * relativeDist
         val vec = (end.xy - start.xy)
         val orth: Point2D = ((vec.y * -1.0) x2y vec.x).normalize()
@@ -148,6 +158,8 @@ open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0,
     }
 
     private fun calculateControlRelative() {
+        // Save the position of control as relative to start and endpoint as
+        // relative distance to start and distance to the line between start and end.
         val cVec = control.xy - start.xy
         val projection = cVec projectOn (end.xy - start.xy)
         val intersection = start.xy + projection
@@ -158,6 +170,8 @@ open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0,
 
 
     fun adjustArrow(size: Double) {
+        // Only the tip is adjusted on size changes from the end-node
+        // as the arc will go from-mid point to mid-point.
         arrowAngleProperty.unbind()
         arrowTip.layoutYProperty().unbind()
         arrowTip.layoutXProperty().unbind()
@@ -182,13 +196,15 @@ open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0,
     }
 
     fun bend(toRight: Boolean = true) {
+        // Bend node by moving the control point by a length of 30 to the right or left.
+        if (!this.isBendable) // TODO bad interface design
+            throw IllegalStateException("Bend was called on an un-bendable arrow.")
         isBent = true
         val mid = start.xy.midpoint(end.xy)
         val pivot: Point2D = LineFrom.calcEnd(mid, end.xy, 30.0)
         val angle: Double = if (toRight) -90.0 else 90.0
         _control.xy = Rotate(Math.toDegrees(angle), pivot.x, pivot.y).transform(mid.x, mid.y)
+        updateTailFromControl()
     }
 
 }
-
-

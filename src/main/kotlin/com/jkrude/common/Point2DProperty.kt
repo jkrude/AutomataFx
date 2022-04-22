@@ -1,11 +1,7 @@
 package com.jkrude.common
 
 import javafx.beans.InvalidationListener
-import javafx.beans.Observable
-import javafx.beans.binding.DoubleExpression
-import javafx.beans.binding.ObjectBinding
 import javafx.beans.property.DoubleProperty
-import javafx.beans.property.ReadOnlyDoubleProperty
 import javafx.beans.property.SimpleDoubleProperty
 import javafx.geometry.Point2D
 
@@ -46,8 +42,6 @@ class Point2DProperty(x: Double = 0.0, y: Double = 0.0) : ReadOnlyPoint2DPropert
     fun set(point: Point2D) {
         set(point.x, point.y)
     }
-
-    fun asReadOnly(): ReadOnlyPoint2DProperty = this
 
     fun bind(otherPoint: Point2DProperty) {
         this.xProperty.bind(otherPoint.xProperty)
