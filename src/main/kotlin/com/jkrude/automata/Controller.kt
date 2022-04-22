@@ -61,6 +61,14 @@ class Controller : DefaultController<State, StateView, Transition, LabeledEdge>(
     override fun onTransitionAdded(edge: LabeledEdge) {
         super.onTransitionAdded(edge)
         edge.from.vertexLogic.addEdge(edge.edgeLogic)
+        edge.selectedProperty().addListener { _ ->
+            // Remove this edge if two edges have the same from - to and the same symbol.
+            // In other words keep the model deterministic.
+            val edgeLogic = edge.edgeLogic
+            if (edgeLogic.from.edges.count { it == edgeLogic } > 1) {
+                super.transitions.remove(edge)
+            }
+        }
         bendIfNecessary(super.transitions, edge)
         bendIfNecessarySameDirection(edge)
     }
