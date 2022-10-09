@@ -69,7 +69,7 @@ class Controller :
             toggleGroup.selectToggle(null)
             states.forEach { it.startSelectionProcess() }
             //transitions.forEach { it.arrow.isDisable = true }
-            centerPane.addEventFilter(MouseEvent.MOUSE_CLICKED, eventFilter)
+            drawingPane.addEventFilter(MouseEvent.MOUSE_CLICKED, eventFilter)
             confirmBtn.isDisable = false
             confirmBtn.isVisible = true
             confirmBtn.setOnAction {
@@ -80,7 +80,7 @@ class Controller :
         private fun endSelection() {
             states.forEach { it.endSelectionProcess() }
             //transitions.forEach { it.arrow.isDisable = false }
-            centerPane.removeEventFilter(MouseEvent.MOUSE_CLICKED, eventFilter)
+            drawingPane.removeEventFilter(MouseEvent.MOUSE_CLICKED, eventFilter)
             confirmBtn.isDisable = true
             confirmBtn.isVisible = false
             this@Controller.showAttractor(selected)

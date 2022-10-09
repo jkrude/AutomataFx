@@ -1,0 +1,8 @@
+#notification {
+  -fx-background-radius: 8;
+  -fx-border-radius: 8;
+}
+
+#notification .label {
+  -fx-text-fill: white;
+}

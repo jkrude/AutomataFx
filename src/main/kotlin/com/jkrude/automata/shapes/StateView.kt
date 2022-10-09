@@ -19,10 +19,13 @@ class StateView(initialPoint: Point2D = 0.0 x2y 0.0, toggleGroup: ToggleGroup, v
 
     private val finalStateCircle = Circle()
     val isFinalProperty: BooleanProperty = SimpleBooleanProperty(vertex.isFinal)
-    var isFinal by asValue(isFinalProperty)
+    var isFinal: Boolean by asValue(isFinalProperty)
         private set
 
     init {
+        isFinalProperty.addListener { _ ->
+            super.vertexLogic.isFinal = isFinalProperty.value
+        }
         finalStateCircle.visibleProperty().bind(isFinalProperty)
         finalStateCircle.radiusProperty().bind(super.sizeProperty.subtract(5))
         finalStateCircle.bindCenter(super.xyProperty)

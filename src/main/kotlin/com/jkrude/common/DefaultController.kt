@@ -20,6 +20,7 @@ import javafx.scene.input.MouseButton
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout.AnchorPane
 import javafx.scene.layout.BorderPane
+import javafx.scene.layout.StackPane
 import java.net.URL
 import java.util.*
 
@@ -32,10 +33,16 @@ abstract class DefaultController<
 
 
     @FXML
+    protected lateinit var notificationPane: AnchorPane
+
+    @FXML
+    protected lateinit var stackPane: StackPane
+
+    @FXML
     protected lateinit var borderPane: BorderPane
 
     @FXML
-    protected lateinit var centerPane: AnchorPane
+    protected lateinit var drawingPane: AnchorPane
 
     protected val states: ObservableList<VView> = FXCollections.observableArrayList(ArrayList())
     protected val transitions: ObservableList<EView> = FXCollections.observableArrayList(ArrayList())
@@ -51,11 +58,11 @@ abstract class DefaultController<
         states.addListener(ListChangeListener { change ->
             while (change.next()) {
                 if (change.wasAdded()) {
-                    centerPane.children.addAll(change.addedSubList.map { it.getDrawable() })
+                    drawingPane.children.addAll(change.addedSubList.map { it.getDrawable() })
                     change.addedSubList.forEach { onVertexAdded(it) }
                 }
                 if (change.wasRemoved()) {
-                    centerPane.children.removeAll(change.removed.map { it.getDrawable() })
+                    drawingPane.children.removeAll(change.removed.map { it.getDrawable() })
                     change.removed.forEach { onVertexRemoved(it) }
                 }
             }
@@ -64,12 +71,12 @@ abstract class DefaultController<
             while (change.next()) {
                 if (change.wasAdded()) {
                     for (edge in change.addedSubList) {
-                        centerPane.children.add(edge.getDrawable())
+                        drawingPane.children.add(edge.getDrawable())
                         onTransitionAdded(edge)
                     }
                 }
                 if (change.wasRemoved()) {
-                    centerPane.children.removeAll(change.removed.map { it.getDrawable() })
+                    drawingPane.children.removeAll(change.removed.map { it.getDrawable() })
                     change.removed.forEach { onTransitionRemoved(it) }
                 }
             }
@@ -79,7 +86,7 @@ abstract class DefaultController<
     protected open val onMouseClicked = EventHandler<MouseEvent> { event ->
         if (event.button == MouseButton.PRIMARY) {
             if (event.clickCount == 2) states.add(createNewVertex(event.x, event.y))
-            else if (event.target == centerPane) toggleGroup.selectToggle(null)
+            else if (event.target == drawingPane) toggleGroup.selectToggle(null)
         }
     }
 
@@ -88,8 +95,8 @@ abstract class DefaultController<
             val targets = states.filter { s -> s.getDrawable().contains(event.x, event.y) }
             if (targets.size != 1) return@EventHandler
             val newEdgeCreator = NewEdgeCreator(targets.first())
-            centerPane.setOnMouseReleased(newEdgeCreator::onMouseReleased)
-            centerPane.setOnMouseDragged(newEdgeCreator::onDragged)
+            drawingPane.setOnMouseReleased(newEdgeCreator::onMouseReleased)
+            drawingPane.setOnMouseDragged(newEdgeCreator::onDragged)
             this.edgeCreator = newEdgeCreator
         }
     }
@@ -113,8 +120,8 @@ abstract class DefaultController<
     }
 
     private fun createEventListener() {
-        centerPane.onMouseClicked = onMouseClicked
-        centerPane.onMousePressed = onMousePressed
+        drawingPane.onMouseClicked = onMouseClicked
+        drawingPane.onMousePressed = onMousePressed
 
         borderPane.sceneProperty().isNotNull.addListener { _ ->
             if (borderPane.scene != null) {
@@ -147,7 +154,7 @@ abstract class DefaultController<
             arrow.isVisible = false // only show if dragged too
             arrow.start.bind(source.xyProperty)
             arrow.end.xy = source.xyProperty.xy
-            centerPane.children.add(arrow)
+            drawingPane.children.add(arrow)
             arrow.toBack()
         }
 
@@ -161,7 +168,7 @@ abstract class DefaultController<
         fun onMouseReleased(event: MouseEvent) {
             if (event.button != MouseButton.SECONDARY || finished) return
             finished = true
-            centerPane.children.remove(arrow)
+            drawingPane.children.remove(arrow)
             val targets = this@DefaultController.states.filter { it.getDrawable().contains(event.x, event.y) }
             if (targets.size != 1) return // TODO nodes can overlap
             val target = targets.first()

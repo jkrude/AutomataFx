@@ -47,7 +47,7 @@
             <option>--add-exports</option>
             <option>javafx.base/com.sun.javafx.event=com.jfoenix</option>
           </options>
-          <mainClass>com.jkrude.games.Main</mainClass>
+          <mainClass>com.jkrude.automata.Main</mainClass>
         </configuration>
       </plugin>
 

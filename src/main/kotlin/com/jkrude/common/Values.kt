@@ -10,4 +10,7 @@ object Values {
     val markedColor: Color = Color.valueOf("#ff7043")
     val backgroundColor: Color = Color.valueOf("#ecf0f5")
     val darkerBackgroundColor: Color = Color.valueOf("#d3d7db")
+
+    val positiveColor: Color = Color.valueOf("#24b981")
+    val negativeColor: Color = Color.valueOf("#e57373")
 }

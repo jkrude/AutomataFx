@@ -1,0 +1,43 @@
+.root {
+  -fx-background-color: #f2f2f2;
+}
+
+.jfx-dialog > .stack-pane {
+  -fx-background-color: transparent;
+}
+
+.card {
+  -fx-background-radius: 32;
+  -fx-border-radius: 32;
+  -fx-background-color: white;
+}
+
+.label {
+  -fx-text-fill: #4D4C4A;
+  -fx-font-size: 14;
+}
+
+.text-field {
+  -jfx-focus-color: #76889a;
+  -jfx-unfocus-color: #4D4C4A;
+  -fx-prompt-text-fill: #505650;
+  -fx-text-fill: #4D4C4A;
+}
+
+.check-box {
+  -fx-checked-color: #ffd900;
+  -fx-fill: #76889a;
+}
+
+.button-bar > .container > .button {
+  -fx-font-size: 14;
+  -fx-border-radius: 6;
+  -fx-background-radius: 6;
+  -fx-background-color: #b9c8d7;
+  -fx-text-fill: #4D4C4A;
+}
+
+.jfx-chip-view.button {
+  -fx-background-color: null;
+  -fx-fill: #f2f2f2;
+}

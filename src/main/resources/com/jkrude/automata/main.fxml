@@ -1,14 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import com.jfoenix.controls.JFXButton?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.SVGPath?>
 <BorderPane xmlns:fx="http://javafx.com/fxml/1" prefHeight="1080.0" prefWidth="1920.0"
-  xmlns="http://javafx.com/javafx/11.0.1" fx:controller="com.jkrude.automata.Controller" fx:id="borderPane">
+  xmlns="http://javafx.com/javafx/11.0.1"
+  fx:controller="com.jkrude.automata.Controller" fx:id="borderPane">
 
 
+  <center>
+    <StackPane BorderPane.alignment="TOP_LEFT" fx:id="stackPane">
+      <AnchorPane style="-fx-background-color: #ecf0f5;" fx:id="drawingPane">
+        <AnchorPane AnchorPane.bottomAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0"
+          maxWidth="200" minHeight="100" minWidth="200" fx:id="notificationPane"/>
+      </AnchorPane>
+    </StackPane>
+  </center>
   <left>
     <VBox id="navigation-rail" maxWidth="130" spacing="64.0" style="-fx-background-color: #d3d7db;"
       BorderPane.alignment="CENTER">
@@ -19,13 +31,18 @@
             <Insets bottom="16.0"/>
           </VBox.margin>
         </Label>
+        <JFXButton style="-fx-background-color: #d3d7db; -fx-background-radius: 8" onAction="#tryWord" prefWidth="110.0"
+          text="Test word" wrapText="true"
+          fx:id="wordTestBtn"
+        >
+          <graphic>
+            <SVGPath content="M16 37.85V9.85L38 23.85Z" fill="#76889a" scaleX="0.7" scaleY="0.7"/>
+          </graphic>
+        </JFXButton>
       </children>
       <padding>
-        <Insets bottom="16.0" left="16.0" right="16.0" top="32.0" />
+        <Insets bottom="16.0" left="16.0" right="16.0" top="32.0"/>
       </padding>
     </VBox>
   </left>
-  <center>
-    <AnchorPane fx:id="centerPane" style="-fx-background-color: #ecf0f5;" />
-  </center>
 </BorderPane>

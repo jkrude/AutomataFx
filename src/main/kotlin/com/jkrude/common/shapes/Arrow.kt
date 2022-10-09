@@ -15,6 +15,7 @@ import javafx.scene.shape.*
 import javafx.scene.transform.Rotate
 import kotlin.math.atan2
 import kotlin.math.cos
+import kotlin.math.max
 import kotlin.math.sin
 
 /**
@@ -163,7 +164,7 @@ open class Arrow(startX: Double = 0.0, startY: Double = 0.0, endX: Double = 0.0,
         val cVec = control.xy - start.xy
         val projection = cVec projectOn (end.xy - start.xy)
         val intersection = start.xy + projection
-        this.relativeDist = start.xy.distance(intersection) / (start.xy.distance(end.xy))
+        this.relativeDist = start.xy.distance(intersection) / max(start.xy.distance(end.xy), 1.0)
         this.relativeDist *= if (control.x < start.x && start.x < end.x || control.x > start.x && start.x > end.x) -1.0 else 1.0
         this.perpendicularPart = control.xy.distance(intersection) * if (curve.isSweepFlag) -1.0 else 1.0
     }

@@ -14,7 +14,7 @@
 
 
   <center>
-    <AnchorPane style="-fx-background-color: #ecf0f5;" fx:id="centerPane">
+    <AnchorPane style="-fx-background-color: #ecf0f5;" fx:id="drawingPane">
       <children>
         <JFXButton AnchorPane.bottomAnchor="40.0" AnchorPane.rightAnchor="40.0" disable="true" focusTraversable="false"
           layoutX="1676.0" layoutY="1013.0" text="Confirm" visible="false" fx:id="confirmBtn">
